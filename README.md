@@ -4,8 +4,8 @@ zoe
 Zest Object Extension model
 
 
-$z.extend <a id="extend" />
+$z.extend
 ===
  
-$z.create <a id="create" />
+$z.create
 ===
