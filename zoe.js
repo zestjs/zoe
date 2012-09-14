@@ -30,10 +30,8 @@
  *
  * Primary extension methods:
  * -$z.extend
- * -$z.create
- *
- * Function extensions and chaining:
  * -$z.fn
+ * -$z.create
  *
  * $z.create helper function:
  * -$z.inherits
@@ -50,6 +48,15 @@
  * Utility functions
  * -$z.log
  * -$z.dir
+ *
+ *
+ * Minification
+ * ------------
+ *
+ * f is used as a shorthand for $z.fn
+ * e is used as a shorthand for $z.extend
+ *
+ * For clarity not all these replacements have been made - they should be made on minification though.
  * 
  */
 
@@ -129,7 +136,7 @@ if (typeof console !== 'undefined') {
  * For example, $z.extend.REPLACE, is the rule function defined by:
  *
  * $z.extend.REPLACE = function(p, q) {
- *   return b;
+ *   return q;
  * }
  *
  * This will overwrite properties on the host object with properties from
@@ -176,33 +183,34 @@ if (typeof console !== 'undefined') {
  *   -direct replace, by reference for objects and functions
  * 
  *   $z.extend.FILL
- *   -does not replace at all. leaves the existing value.
+ *   -only adds the value if it doesn't already exist.
  *   -This method effectively 'fills in' any properties which aren't already
  *    defined.
  *
  *   $z.extend.DREPLACE (deep replace)
  *   -direct replace for all property types except object
  *   -when a native object is encountered for replacement,
- *    it is in turn recursively replaced onto the object.
+ *    it is in turn recursively replaced onto the object, creating a deep copying.
  *
  *   $z.extend.DFILL (deep fill)
  *   -analogously, provides property values when not already there, when not an object.
- *   -when an object is provided, it applies the same process to that object as well.
+ *   -when an object is provided, it fills in properties on the subobject that aren't
+ *    already defined
  *
  *   $z.extend.IGNORE
  *   -completely leaves the property out of the extension process
  * 
  *   $z.extend.STR_APPEND
- *   -if both properties are strings, it appends them together
+ *   -assuming properties are strings, it appends them together
  *
  *   $z.extend.STR_PREPEND
- *   -if both properties are strings, the reverse concatenation of the above
+ *   -assuming properties are strings, the reverse concatenation of the above
  *   
  *   $z.extend.ARR_APPEND
- *   -if both properties are arrays, they are concatenated
+ *   -assuming properties are arrays, they are concatenated
  *   
  *   $z.extend.ARR_PREPEND
- *   -if both properties are arrays, they are reverse concatenated
+ *   -assuming properties are arrays, they are reverse concatenated
  *
  *
  * Adding additional rule functions onto $z.extend is encouraged, but the above should
@@ -228,60 +236,59 @@ if (typeof console !== 'undefined') {
  *
  *    $z.extend(config, default_config, $z.extend.DEEP_FILL);
  *
- * 4. Custom extension to allow an array to be extended by a string or array
+ * 4. Custom extension with automatic type adjustment
  *
- *    var a = { names: ['Sue', 'Bob'] };
- *    var b = { names: 'Peter' };
- *    var c = { names: ['Alice'] };
- *
- *
- *    var ARR_STR_APPEND = function(a, b) {
- *      a = a === undefined ? [] : [a];
- *      if (b instanceof Array)
- *        return a.concat(b);
- *      else
- *        return a.push(b);
+ *    var Heading = {
+ *      template: function(text) {
+ *        return '<h1>' + text + '</h1>';
+ *      },
+ *      css: 'font-size: 12px;'
+ *    };
+ *    var Red = {
+ *      css: 'color: red;'
  *    }
  *
- *    $z.extend(a, b, {
- *      '*': $z.extend.REPLACE,
- *      'invite': ARR_STR_APPEND
- *    });
- *    $z.extend(a, c, {
- *      '*': $z.extend.REPLACE,
- *      'invite': ARR_STR_APPEND
+ *    $z.extend(Heading, Red, {
+ *      css: $z.extend.STR_APPEND
  *    });
  *
- *    returns a = {
- *      invite: ['Sue', 'Bob', 'Peter', 'Alice']
- *    }
+ *    returns Heading = {
+ *      template: function(text) {
+ *        return '<h1>' + text + '</h1>';
+ *      },
+ *      css: 'font-size: 12px;color: red;'
+ *    };
+ *
  *
  *    This demonstrates the primary use case for $z.extend rules -
- *    the ability to have a flexible object inheritance mechanism.
+ *    the ability to have a flexible object inheritance mechanism for web components.
  *
- *    This is what is provided by $z.create, the next major function.
+ *    The first benefit we will see of this is in the ability to compose functions
+ *    through inheritance, allowing for an eventing paradigm.
+ *   
+ *    This is what is provided by $z.fn, the next major function.
  * 
  */
 
 var e = $z.extend = function extend(a, b, rule) {
   
-  rule = rule || $z.extend.DEFINE;
-  
-  if (typeof rule == 'function')
-    rule = {
-      '*': rule
-    };
+  var ruleObj;
+  if (typeof rule == 'object') {
+    ruleObj = rule;
+    rule = void 0;
+  }
   
   for (var p in b)
     if (!b.hasOwnProperty || b.hasOwnProperty(p)) {
       var out;
       
       try {
-        out = (rule[p] || rule['*'])(a[p], b[p], e.deriveRules(rule, p));
+        out = (rule || (ruleObj && (ruleObj[p] || ruleObj['*'])) || $z.extend.DEFINE)(a[p], b[p], ruleObj && e.deriveRules(ruleObj, p));
       }
       catch (er) {
         $z.dir(a);
         $z.dir(b);
+        $z.dir(e.deriveRules(rule, p));
         $z.log('$z.extend: "' + p + '" override error. \n ->' + (er.message || er));
       }
       if (out !== undefined)
@@ -344,12 +351,6 @@ var overrides = [
 for (var i = 0; i < overrides.length; i++)
   e[overrides[i].name] = overrides[i];
 
-e.make = function(rule) {
-  return function(a, b) {
-    return e(a, b, rule);
-  }
-}
-
 
 /*
  create a rule for a property object from a rules object
@@ -376,6 +377,337 @@ $z.extend.deriveRules = function(rules, p) {
   
   return newRules;
 }
+
+/*
+ * $z.fn
+ * Flexible function composition
+ * http://github.com/zestjs/zoe#zfn
+ *
+ *
+ * The basic concept is that many situations in designing software
+ * involve the execution of arrays of functions.
+ * $z.fn provides a flexible way of managing the execution of 'function arrays'
+ * or 'function chains'.
+ * Then when used with $z.extend, we can have an extend rule that automatically
+ * composes functions together.
+ *
+ * For example,
+ * 1) Event handling is basically adding a function to a list of functions
+ *    to be executed together.
+ * 2) Asynchronous tasks involve running a list of functions, but only
+ *    starting the next one once the previous one has sent a complete callback.
+ * 3) Logic filters involve function composition where outputs are logically
+ *    combined.
+ *
+ * All of the above cases can be handled by the use of $z.fn.
+ *
+ * Usage:
+ *   $z.fn(compositionFunction, [initialFunctions]);
+ *   $z.fn(compositionFunction);
+ *   $z.fn([initialFunctions]);
+ * 
+ * [initialFunctions]: an array of the inital functions to be provided (optional)
+ * compositionFunction: the composition function to handle execution.
+ *
+ * The composition function takes the following form:
+ *
+ * compositionFunction = function(self, args, fns) {
+ *   return output;
+ * }
+ *
+ * self is the 'this' scope to use
+ * args is the array of arguments (already converted to an array)
+ * fns is the array of functions to execute
+ *
+ * It is the responsibilty of the composition function to determine which
+ * functions to run, when to run them, with what arguments, and what final output to provide.
+ *
+ * 
+ *
+ *
+ * Scoping
+ * -------
+ *
+ * Extending
+ * ---------
+ *
+ *
+ * Use cases:
+ *
+ * 1) Eventing:
+ *    var p = $z.fn();
+ *    
+ *
+ * The basic concept behind $z.fn
+ *
+ * 
+ * Example:
+ *   var f = $z.fn();
+ *   f.on(function() { return 'hello world'; });
+ *   f.on(function() { console.log('another function'); });
+ *   console.log(f());
+ *
+ * var f = $z.fn($z.fn.LAST_DEFINED);
+ * 
+ * var f = $z.fn([startFunc]);
+ *
+ * NB binding:
+ *
+ * pass method allows custom scope and arg binding
+ * bind method allows for scope fixing
+ *
+ * var s = $z.fn();
+ * s.bind(newThis);
+ *
+ * s.bind(undefined); //undoes binding to standard func again!
+ *   
+ * See: http://www.zestjs.org/docs/#fn
+ *
+ *   $z.extend.CHAIN_AFTER
+ *   -when overriding a function with another function, the functions are chained
+ *    together to run one after the other
+ *   -if the existing property is an instance of $z.fn, it is ammended, otherwise
+ *    it is wrapped with the $z.fn functionality before being ammended
+ * 
+ *   $z.extend.CHAIN_BEFORE
+ *   -just as with CHAIN_AFTER but with the reverse execution order
+ */
+
+var f = $z.fn = function(run, fns) {
+  if (run instanceof Array) {
+    fns = run;
+    run = null;
+  }
+  
+  var instance = function() {
+    //http://github.com/zestjs/zoe#zfn
+    return instance.run(instance._this || this, Array.prototype.splice.call(arguments, 0), instance.fns);
+  }
+  
+  instance.constructor = f;
+  
+  instance.fns = fns || [];
+  instance.run = run || f.LAST_DEFINED;
+  
+  instance.on = on;
+  instance.off = off;
+  instance.first = first;
+  
+  instance._this = undefined;
+  instance.bind = bind;
+  
+  return instance;
+}
+
+var bind = function(_this) {
+  this._this = _this;
+  return this;
+}
+var on = function(fn) {
+  this.fns.push(fn);
+  return this;
+}
+var off = function(fn) {
+  if (!fn) {
+    this.fns = [];
+    return;
+  }
+  for (var i = 0; i < this.fns.length; i++)
+    if (this.fns[i] == fn) {
+      this.fns.splice(i, 1);
+      return;
+    }
+}
+var first = function(fn) {
+  this.fns = [fn].concat(this.fns);
+  return this;
+}
+
+/* $z.fn.createReduction
+ * 
+ * a helper function in building synchronous composition functions
+ * takes a "reduce" function to amalgamating synchronous outputs into a
+ * single output
+ *
+ * Usage:
+ *   $z.fn.createReduction(startVal, function(out1, out2) {
+ *     return reducedOutput;
+ *   });
+ *
+ * Example:
+ *
+ * Assuming a numberical output, provide the totals of all the function outputs:
+ *   $z.fn.createReduction(0, function(out1, out2) {
+ *     return out1 + out2;
+ *   });
+ *
+ */
+var createReduction = f.createReduction = function(startVal, reduce) {
+  if (reduce === undefined) {
+    reduce = startVal;
+    startVal = undefined;
+  }
+  return function(self, args, fns) {
+    var output = startVal;
+    for (var i = 0; i < fns.length; i++)
+      output = reduce(output, fns[i].apply(self, output));
+    return output;
+  }
+}
+
+/*
+ * $z.fn.LAST_DEFINED
+ *
+ * Executes all functions in the chain, returning the last non-undefined
+ * output.
+ *
+ */
+f.LAST_DEFINED = createReduction(function(out1, out2) {
+  return out2 !== undefined ? out2 : out1;
+});
+
+/*
+ * $z.fn.STOP_DEFINED
+ *
+ * Runs the execution of fns, until one function returns
+ * a non-undefined output.
+ * Then no further functions are executed.
+ *
+ * Useful for any type of input ownership system, where functions
+ * check if they should control output based on input, and as soon as one
+ * triggers an output, we forget the others.
+ * 
+ */
+f.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
+  var output;
+  for (var i = 0; i < fns.length; i++) {
+    output = fns[i].apply(self, args);
+    if (output !== undefined)
+      return output;
+  }
+  return output;
+}
+/*
+ * $z.fn.ASYNC
+ *
+ * Allows for the creation of an asynchronous step function.
+ *
+ * Example:
+ *   var f = $z.fn($z.fn.ASYNC);
+ *
+ *   f.on(function(any, number, of, args, next) {
+ *     setTimeout(complete, 5000);
+ *   });
+ *
+ *   f.on(function(same, number, of, args, next) {
+ *     console.log('complete');
+ *   });
+ *
+ *   f(function() {
+ *     //all done (optional function)
+ *   }); // waits 5 seconds, then prints complete
+ *
+ */
+f.ASYNC = function ASYNC(self, args, fns) {
+  var i = 0;
+  var complete;
+  if (typeof args[args.length - 1] == 'function')
+    complete = args.pop();
+  var makeNext = function(i) {
+    return function() {
+      if (fns[i])
+        fns[i].apply(self, args.concat([makeNext(i + 1)]));
+      else if (complete)
+        complete();
+    }
+  }
+  return makeNext(0)();
+}
+
+/*
+ * $z.fn.makeChain
+ *
+ * Creates a $z.extend rule that will automatically
+ * combine functions with the given composition
+ *
+ * Usage:
+ *   $z.fn.makeChain(COMPOSITION_FN [, first]);
+ *
+ * When the 'first' parameter is provided, this creates
+ * a reverse chain putting the new items at the beginning of the
+ * function list to be executed.
+ *
+ * Example:
+ *
+ *   var Load = {
+ *     load: function(complete) {
+ *       setTimeout(complete, 1000);
+ *     }
+ *   }
+ *   var LoadExtra = {
+ *     load: function(complete) {
+ *       setTimeout(complete, 2000);
+ *     }
+ *   }
+ *
+ *   $z.extend(Load, LoadExtra, {
+ *     load: $z.fn.makeChain($z.fn.ASYNC)
+ *   });
+ *
+ *   Load.load(); // takes 3 seconds to complete
+ *
+ */
+
+f.makeChain = function(compositionFunction, first) {
+  return function(a, b) {
+    if (!a || a.constructor != $z.fn || a.run != compositionFunction)
+      a = $z.fn(compositionFunction, !a ? [] : [a]);
+    
+    if (first)
+      a.first(b);
+    else
+      a.on(b);
+    
+    return a;
+  }
+}
+
+// create the $z.extend rules for the corresponding function chain methods.
+e.CHAIN = f.makeChain($z.fn.LAST_DEFINED);
+e.CHAIN_FIRST = f.makeChain($z.fn.LAST_DEFINED, true);
+
+/*
+ * $z.on
+ *
+ * Shorthand for converting any function to a chain
+ * Effectively duck punching using $z.fn, but if the
+ * function is already a $z.fn, it is just added to the
+ * list (using less memory than recursive duck punching)
+ *
+ * Usage:
+ *
+ * var obj = { sayHi: function() {} }
+ * 
+ * $z.on(obj, 'sayHi', function() {
+ * });
+ *
+ * Which is identical to:
+ * obj.sayHi = $z.fn(obj.sayHi);
+ * obj.sayHi.on(function() {
+ * });
+ *
+ */
+$z.on = function(obj, name, f) {
+  var val = obj[name];
+  if (!val || val.constructor != $z.fn || val.run != $z.fn.LAST_DEFINED)
+    obj[name] = $z.fn(val ? [val] : []);
+  obj[name].on(f);
+}
+$z.remove = function(obj, name, f) {
+  if (obj[name].constructor == $z.fn)
+    return obj[name].remove(f);
+}
+
 
 /*
  * $z.create
@@ -463,37 +795,26 @@ $z.extend.deriveRules = function(rules, p) {
  *     Sometimes it can be useful to allow an inheritor more control by having a hook run before each
  *     further implementor from the inheritance list is applied.
  *
- *     For example, an Event implementor can look out for a special 'event' property object and automatically
- *     register those events on the output object.
- *
- *     eg:
  *     _integrate = function(makeDefinition, createDefinition) {
- *       if (makeDefinition.events)
- *         for (var evt in makeDefinition.events) {
- *           this.events[evt] = this.events[evt] || [];
- *           this.events[evt].push(makeDefinition.events[evt]);
- *         }
- *       return {
- *         events: $z.extend.IGNORE
- *       };
+ *       //can check and modify the output object, accessed as 'this'
  *     }
  *
  *     makeDefinition: the current definition being implemented
  *     createDefinition: the primary definition in $z.create
  *     'this': is bound to the output object
- *     return value: new rules to apply as part of the $z.extend for the current definition
  *
- *     The rules return value is often needed because we need to ignore the special flags or properties
- *     so they don't get duplicated on the output object. We can't delete the property from the definition
- *     object because definition objects are designed to be immutable in order to be inherited again.
- *
+ *     return value:
+ *     In some rare cases, it can be necessary to perform some mapping of the definition object first.
+ *     In this case, the definition object can be temporarily modified, if a 'revert' function is returned
+ *     from the integrate function. This function will be called after extension to allow the definition
+ *     to remain unchanged, as definitions are constants.
  *
  *   7. _built:
  *
  *     If an inheritor wants to apply some final changes to the object after all the other inheritors
  *     have completed, then a built function can make final modifications.
  *
- *     eg, our event class could run an init event:
+ *     eg, running an 'init' event
  *     _built = function(createDefinition) {
  *       this.trigger('init');
  *     }
@@ -508,21 +829,13 @@ $z.extend.deriveRules = function(rules, p) {
  *        The only modification made by $z.create is automatically appending the _implement array of the primary
  *        definition when the inheritor form of $z.create is used - $z.create([inheritors], definition);
  *
- *
- * While the Event class has been used as an example above, a different direction has been taken
- * by the author.
- *
- * Instead of a special eventing class, a system of a 'function chaining' extension is provided with
- * $z.fn. This is documented further below.
- *
- * That said, it is very straightforward to put an Event class together together should you wish.
  * 
  */
 $z.create = function(inherits, definition) {
   definition = inheritCheck(inherits, definition);
   
   if (definition._definition)
-    throw 'You can only implement new definitions. Use the inherits syntax to extend other definitions.';
+    throw "Cannot use $z.create on an instance of $z.create";
   
   //find base definition (first base defined)
   var obj;
@@ -548,24 +861,24 @@ $z.create = function(inherits, definition) {
   
   //state variables
   var _inherited = [];
+  var _built = $z.fn();
   var _integrate = [];
-  var _built = [];
+  
+  _integrate._this = _built._this = obj;
   
   implementLoop(definition, function loop(def) {
     
-    var integrateRules = null;
+    var _revert = $z.fn();
     for (var i = 0; i < _integrate.length; i++) {
-      var curRule;
-      if (curRule = _integrate[i].call(obj, def, definition)) {
-        integrateRules = $z.extend(integrateRules || {}, _extend);
-        $z.extend(integrateRules, curRule, $z.extend.REPLACE);
-      }
+      var output = _integrate[i].call(obj, def, definition);
+      if (output)
+        _revert.on(output);
     }
     
     if (def._integrate)
       _integrate.push(def._integrate);
     
-    $z.extend(obj, def, integrateRules || _extend);
+    $z.extend(obj, def, _extend);
     
     if (def._extend)
       $z.extend(_extend, def._extend);
@@ -574,7 +887,10 @@ $z.create = function(inherits, definition) {
       def._make.call(obj, definition, def);
       
     if (def._built)
-      _built.push(def._built);
+      _built.on(def._built);
+      
+    if (_revert)
+      _revert.call(obj, def);
       
     _inherited.push(def);
     
@@ -582,14 +898,10 @@ $z.create = function(inherits, definition) {
     //diamond problem
     // - skip double inheritance by default, lowest inheritor always used
     // - 'reinherit' property can specify to always rerun the inheritance at each repeat
-    if (_inherited.indexOf(def) != -1 && !def._reinherit)
-      return true;
+    return _inherited.indexOf(def) != -1 && !def._reinherit
   });
   
-  for (var i = 0; i < _built.length; i++)
-    _built[i].call(obj, definition);
-  
-  delete obj._extend;
+  _built(definition);
   
   return obj;
 }
@@ -678,323 +990,65 @@ $z.inherits = function(obj, def) {
 
 
 /*
- * $z.functional
- * 
- * 
- * 
- * Function-object make functions
+ * $z.constructor
+ * http://github.com/zestjs/zoe#zconstructor
  *
- * Just like $z.constructor, except for functions instead of objects.
- *
- * The function itself that is returned corresponds to running the 'main'
- * function on the prototype.
- *
- * Note prototype inheritance is feigned here, by merely copying the prototype.
+ * A base inheritor definition for $z.create that allows for javascript prototype construction
+ * such that we can create a class that can be instantiated with the new keyword.
  *
  * Usage:
- * var q = $z.create([
- *   $z.functional
- * ], {
+ *
+ *   var Obj = $z.create([$z.constructor], {
+ *     construct: function(args) {
+ *     },
+ *     prototype: {
+ *       prototype: 'property'
+ *     }
+ *   });
+ *
+ *   var p = new Obj(args);
+ *
+ * In this way, $z.create and $z.constructor provide a convenience method for
+ * building up constructable prototypes with multiple inheritance through definition objects.
+ *
+ * Additionally, once $z.constructor has been implemented, standard JavaScript classes written
+ * natively can also be extended by adding them into the $z.create implement list after $z.constructor.
+ * 
+ *
+ * Extension
+ * ---------
+ *
+ * By default, the prototype object is extended with any new properties.
+ * The construct function is by default chained as an instance of $z.fn() so that
+ * many construct hooks can be created by each inheritor, all under obj.construct().
+ *
+ * The standard extension rules for $z.create apply. Thus, to create an extension
+ * rule on the prototype, simply add the rule to _extend.
+ *
+ * For example, an init event / chain:
+ *
+ * var def = {
+ *   _implement: [$z.constructor],
+ *   _extend: {
+ *     'prototype.init': $z.extend.CHAIN
+ *   },
  *   construct: function() {
- *     console.log('creating a q functional');
+ *     this.init();
  *   },
  *   prototype: {
- *     main: function(arg) {
- *       console.log('running the q functional instance');
- *     },
- *     method: function() {
- *       console.log('running a method on p!');
+ *     init: function() {
  *     }
  *   }
- * });
- * 
- * Then to create an "instance" use:
- * var p = q();
- *
- * Then run the function normally as:
- * p();
- * p.method();
- *
- * This will then execute the 'main' chain.
- *
- * To keep track of the current function scope, a '_this'
- * variable is set on the funtion for each run, and
- * deleted afterwards.
- *
- * This saves having to play with argument splicing.
- *
- */
-$z.functional = {
-  _extend: {
-    'prototype.main': e.CHAIN,
-    construct: e.CHAIN,
-    prototype: e
-  },
-  _base: function() {
-    function instantiator() {
-      function f() {
-        // http://www.zestjs.org/docs#functional
-        if (!f.main)
-          return;
-        f._this = this;
-        var output = f.main.apply(f, arguments);
-        delete f._this;
-        return output;
-      }
-      if (instantiator.prototype)
-        $z.extend(f, instantiator.prototype);
-      f.constructor = instantiator;
-      if (instantiator.construct)
-        instantiator.construct.apply(f, arguments);
-      return f;
-    }
-    return instantiator;
-  }
-};
-
-/*
- * $z.fn
- * Creates function chains under various reduction functions
- * Example:
- *   var f = $z.fn();
- *   f.on(function() { return 'hello world'; });
- *   f.on(function() { console.log('another function'); });
- *   console.log(f());
- *
- * var f = $z.fn($z.fn.LAST_DEFINED);
- *
- * For LAST_DEFINED and STOP_DEFINED, the output of the previous function
- * is added as the last function argument.
- * 
- * var f = $z.fn([startFunc]);
- *
- * NB binding:
- *
- * pass method allows custom scope and arg binding
- * bind method allows for scope fixing
- *
- * var s = $z.fn();
- * s.bind(newThis);
- *
- * s.bind(undefined); //undoes binding to standard func again!
- *   
- * See: http://www.zestjs.org/docs/#fn
- *
- *   $z.extend.CHAIN_AFTER
- *   -when overriding a function with another function, the functions are chained
- *    together to run one after the other
- *   -if the existing property is an instance of $z.fn, it is ammended, otherwise
- *    it is wrapped with the $z.fn functionality before being ammended
- * 
- *   $z.extend.CHAIN_BEFORE
- *   -just as with CHAIN_AFTER but with the reverse execution order
- */
-
-//could possibly allow a second function argument to explicitly
-//specify the function to go before or after!
-//could also allow function labels for easier debugging
-
-var buildOnce =  function(fn) {
-  return function() {
-    var output = fn.apply(this, arguments);
-    if (output === null)
-      return undefined;
-    for (var i = 0; i < this.fns.length; i++)
-      if (this.fns[i] == func) {
-        this.fns.splice(i, 1);
-        break;
-      }
-    return output;
-  }
-};
-var createRunFunction = function(reduce, startVal) {
-  return function() {
-    var output = startVal;
-    var args = Array.prototype.splice.call(arguments, 0);
-    var err = null;
-    for (var i = 0; i < this.fns.length; i++)
-      //try {
-        output = reduce(output, this.fns[i].apply(this._this, output === undefined ? args : Array.prototype.concat.call(args, [output])));
-      //}
-      //catch (e) {
-      //  err = e;
-      //}
-    if (err)
-      throw err;
-    return output;
-  };
-}
-
-$z.fn = $z.create({
-  _extend: {
-    prototype: e
-  },
-  _base: $z.functional.base,
-  construct: function(o, f) {
-    this.fns = o instanceof Array ? o : (f ? [f] : []);
-    this.run = typeof o == 'function' ? o : $z.fn.LAST_DEFINED;
-    this.constructor = $z.fn;
-    this.on = this.after;
-    this.once = this.onceAfter;
-  },
-  prototype: {
-    main: function() {
-      if (this.scope !== undefined)
-        this._this = this.scope;
-  
-      if (this.fns.length == 0)
-        return undefined;
-      
-      var output = this.run.apply(this, arguments);
-      
-      return output;
-    },
-    remove: function(fn) {
-      if (!fn) {
-        this.fns = [];
-        return;
-      }
-      for (var i = 0; i < this.fns.length; i++)
-        if (this.fns[i] == fn) {
-          this.fns.splice(i, 1);
-          return;
-        }
-    },
-    before: function(fn) {
-      this.fns = [fn].concat(this.fns);
-      return this;
-    },
-    after: function(fn) {
-      this.fns.push(fn);
-      return this;
-    },
-    onceAfter: function(fn) {
-      this.after(buildOnce(fn));
-    },
-    onceBefore: function(fn) {
-      this.before(buildOnce(fn));
-    },
-    pass: function(scope, args) {
-      var self = this;
-      return function() {
-        if (self.fns.length == 0)
-          return undefined;
-        
-        self._this = scope;
-        self.main.apply(self, args.concat(Array.prototype.splice.call(arguments, 0)));
-        
-        return output;
-      }
-    }
-  },
-  
-  //execution functions
-  createRunFunction: createRunFunction,
-  LAST_DEFINED: createRunFunction(function(out1, out2) {
-    return out2 !== undefined ? out2 : out1;
-  }, undefined),
-  STOP_DEFINED: function() {
-    var args = Array.prototype.splice.call(arguments, 0);
-    for (var i = 0; i < this.fns.length; i++) {
-      var output = this.fns[i].apply(this._this, Array.prototype.concat.call(args, [output]));
-      if (output !== undefined)
-        return output;
-    }
-    return undefined;
-  },
-  STOP_FIRST_DEFINED: function() {
-    var args = Array.prototype.splice.call(arguments, 0);
-    if (this.fns[0].apply(this._this, args) !== undefined)
-      return;
-    for (var i = 1; i < this.fns.length; i++)
-      this.fns[i].apply(this._this, args);
-  },
-  // f.on(function(arg, next) { next() }); f(arg, complete);
-  NEXT: function() {
-    var args = Array.prototype.splice.call(arguments, 0);
-    
-    var self = this;
-    var i = 0;
-    var makeNext = function(i) {
-      return function() {
-        if (self.fns[i])
-          self.fns[i].apply(self._this, args.concat([makeNext(i + 1)]));
-      }
-    }
-    return makeNext(0)();
-  },
-  AND: createRunFunction(function(out1, out2) {
-    return out1 && out2;
-  }, true),
-  OR: createRunFunction(function(out1, out2) {
-    return out1 || out2;
-  }, false)
-});
-
-
-e.buildChain = function(f, type) {
-  type = type || $z.fn.LAST_DEFINED;
-  if (f === undefined)
-    f = $z.fn(type);
-  if (f.constructor !== $z.fn)
-    f = $z.fn(type, f);
-  return f;
-}
-  function CHAIN_AFTER(a, b) {
-    a = e.buildChain(a);
-    a.after(b);
-    return a;
-  }
-  function CHAIN_BEFORE(a, b) {
-    a = e.buildChain(a)
-    a.before(b);
-    return a;
-  }
-  e.CHAIN = e.CHAIN_AFTER;
-
-/*
- * $z.on
- *
- * Shorthand for converting any function to a chain
- *
- * Usage:
- *
- * var obj = { sayHi: function() {} }
- * 
- * $z.on(obj, 'sayHi', function() {
- * });
- *
- * Which is identical to:
- * obj.sayHi = $z.fn(obj.sayHi);
- * obj.sayHi.on(function() {
- * });
- *
- */
-$z.on = function(obj, name, f) {
-  obj[name] = $z.fn([obj[name]]).on(f);
-}
-$z.remove = function(obj, name, f) {
-  if (obj[name].constructor == $z.fn)
-    obj[name].remove(f);
-}
-
-
-/*
- * $z.constructor
- *
- * A base definition for $z.implement that allows for javascript prototype construction
- * such that we can create a class that can be instantiated with the new keyword.
- * 
- * Read more about this inheritance model at www.zestjs.org/docs#constructor
+ * }
  *
  */
 $z.constructor = {
   _base: function() {
     function constructor() {
-      // http://www.zestjs.com/docs#constructor
+      // http://github.com/zestjs/zoe#zcreate
       return constructor.construct.apply(this, arguments);
     }
-    constructor.construct = $z.fn($z.fn.STOP_FIRST_DEFINED);
+    constructor.construct = $z.fn();
     return constructor;
   },
   _extend: {
@@ -1009,20 +1063,25 @@ $z.constructor = {
       if (p && !p.enumerable)
         $z.extend(this.prototype, def.prototype, $z.extend.deriveRules(this._extend, 'prototype'));
     }
+
+    //allow for working with standard prototypal inheritance as well    
+    if (typeof def == 'function' && !def._definition)
+      def.construct = def;
       
-    //allow for working with standard prototypal inheritance as well
-    if (typeof def == 'function' && !(def._definition || def.implement || def.base || def.make || def.integrate || def.built))
-      return {
-        construct: def,
-        prototype: def.prototype
-      };
+    return function(def) {
+      delete def.construct;
+    }
   }
 };
 
 
 /*
- * $z.InstanceChains
- * Allows the specification of function chains bound to the instance instead of the prototype
+ * $z.EventChain
+ * Eventing based on the use of function chains.
+ *
+ * 
+ *
+ * The core of this implementor is effectively to allow eventing
  *
  * Usage:
  * instanceChains: ['click']
@@ -1034,94 +1093,58 @@ $z.constructor = {
  * they become portable beyond the component object (eg for eventing)
  *
  */
-$z.InstanceChains = {
-  _extend: {
-    instanceChains: $z.extend.ARR_APPEND
-  },
+
+$z.EventChain = {
   _integrate: function(def) {
-    this.instanceChains = this.instanceChains || [];
-    //any slashed properties on the prototype are added as instance chains automatically
-    if (def.prototype) {
-      for (var p in def.prototype)
-        if (p.substr(0, 2) == '__' && p.substr(p.length - 2, 2) != '__') {
-          if (this.instanceChains.indexOf(p.substr(2)) == -1)
-            this.instanceChains.push(p.substr(2))
-        }
-        else if (p.substr(p.length -2, 2) == '__' && p.substr(0, 2) != '__') {
-          if (this.instanceChains.indexOf(p.substr(0, p.length - 2)) == -1)
-            this.instanceChains.push(p.substr(0, p.length - 2));
-        }
+    var revertMap;
+    var obj = this;
+    var applyInstance = function(p, name, extendRule) {
+      obj._extend['prototype.' + name] = extendRule;
+      
+      def.prototype[name] = def.prototype[p];
+      delete def.prototype[p];
+      
+      revertMap = revertMap || {};
+      revertMap[name] = p;
     }
     
-    for (var i = 0; i < this.instanceChains.length; i++)
-      this._extend['prototype.' + this.instanceChains[i]] = $z.extend.CHAIN;
+    for (var p in def.prototype) {
+      var startUnderscores = p.substr(0, 2) == '__';
+      var endUnderscores = p.substr(p.length - 2, 2) == '__';
+      
+      if (startUnderscores && !endUnderscores)
+        applyInstance(p, p.substr(2), $z.fn.CHAIN);
+        
+      else if (!startUnderscores && endUnderscores)
+        applyInstance(p, p.substr(0, p.length - 2), $z.fn.CHAIN_FIRST);
+        
+      else {
+        applyInstance(p, p.substr(2, p.length - 4), $z.fn.CHAIN);
+        delete this.prototype[p.substr(2, p.length - 4)];
+      }
+    }
+    
+    if (revertMap)
+      return function(def) {
+        for (var name in revertMap) {
+          def.prototype[revertMap[name]] = def.prototype[name];
+          delete def.prototype[name];
+        }
+      }
   },
   construct: function() {
-    if (this.constructor.instanceChains)
-    for (var i = 0; i < this.constructor.instanceChains.length; i++) {
-      var instanceFunc = this.constructor.instanceChains[i];
-      if (this[instanceFunc] !== undefined)
-        this[instanceFunc] = $z.fn([this[instanceFunc]]);
-      else
-        this[instanceFunc] = $z.fn();
-      this[instanceFunc].scope = this;
+    //ALL function chains on the prototype made into instance chains
+    for (var p in this) {
+      var curProperty = this[p];
+      if (curProperty && curProperty.constructor == $z.fn)
+        curProperty = $z.fn(curProperty.run, [curProperty]);
     }
   }
 }
 
 /*
- * $z.Options
- *
- * Provides a 'default options' object on the constructor
- * Options will be added with defaults in the preconstructor
- *
- * An optional 'mixin' option allows for options to be mixed in
- * to the instance on construction completion.
- *
- * $z.constructor({
- *   //default options::
- *   options: {
- *     value: 'test'
- *   },
- *   mixin: true, //opt into instance options mixin
- * });
- *
- */
-$z.Options = {
-  _extend: {
-    'options': $z.extend,
-    'options.*': $z.extend.REPLACE,
-    'mixin': $z.extend.REPLACE
-  },
-  options: {},
-  _built: function() {
-    //allow no argument constructors to have default {} argument
-    var constructFunc = this.construct;
-    this.construct = function() {
-      if (arguments.length == 0)
-        constructFunc.apply(this, [{}]);
-      else
-        constructFunc.apply(this, arguments);
-    }
-    
-    //add mixin if necessary
-    //added on built to ensure a complete post-constructor
-    //mixin based on the prototype extension rules
-    if (this.mixin) {
-      var self = this;
-      this.construct.on(function(options) {
-        $z.extend(this, options, $z.extend.deriveRules(self._extend, 'prototype'));
-      });
-    }
-  },
-  construct__: function(options) {
-    $z.underwrite(options, this.constructor.options);
-  }
-};
-
-/*
  * $z.Pop
- * Allows for separating prototype layers
+ * Allows for separating prototype layers between inheritors, by implementing $z.Pop
  * Useful when using the debugger to inspect prototype methods in a cleaner way
  *  as you can see the prototype chains
  *
