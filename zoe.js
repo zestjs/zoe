@@ -431,7 +431,7 @@ $z.on = function(obj, name, f) {
 }
 $z.off = function(obj, name, f) {
   if (obj[name].constructor == $z.fn)
-    return obj[name].remove(f);
+    return obj[name].off(f);
 }
 
 
@@ -744,6 +744,7 @@ var e = $z.extend = function extend(a, b, rule) {
   return a;
 }
 
+$z.extend.EXTEND = $z.extend;
 $z.extend.DEFINE = function DEFINE(a, b) {
   if (a !== undefined)
     throw 'No override specified.';
@@ -845,13 +846,13 @@ $z.extend.deriveRules = function(rules, p) {
   return newRules;
 }
 /*
- * $z.fn.makeChain
+ * $z.extend.makeChain
  *
  * Creates a $z.extend rule that will automatically
  * combine functions with the given execution function
  *
  * Usage:
- *   $z.fn.makeChain(EXECUTION_FUNCTION [, first]);
+ *   $z.extend.makeChain(EXECUTION_FUNCTION [, first]);
  *
  * When the 'first' parameter is provided, this creates
  * a reverse chain putting the new items at the beginning of the
@@ -860,7 +861,7 @@ $z.extend.deriveRules = function(rules, p) {
  * The 'ignoreExecution' property exists to check if we want to
  * override the execution function on the chain if one already exists.
  *
- * $z.fn.CHAIN is a weak extension rule as it will append to whatever
+ * $z.extend.CHAIN is a weak extension rule as it will append to whatever
  * chain already exists on the host object, by setting this flag to true.
  *
  * Example:
@@ -884,7 +885,7 @@ $z.extend.deriveRules = function(rules, p) {
  *
  */
 
-$z.fn.makeChain = function(executionFunction, first, ignoreExecution) {
+$z.extend.makeChain = function(executionFunction, first, ignoreExecution) {
   return function(a, b) {
     if (!a || a.constructor != $z.fn || (!ignoreExecution && a.run != executionFunction))
       a = $z.fn(executionFunction, !a ? [] : [a]);
@@ -899,9 +900,9 @@ $z.fn.makeChain = function(executionFunction, first, ignoreExecution) {
 }
 
 // create the $z.extend rules for the corresponding function chain methods.
-$z.extend.CHAIN = $z.fn.makeChain($z.fn.LAST_DEFINED, false, true);
-$z.extend.CHAIN_FIRST = $z.fn.makeChain($z.fn.LAST_DEFINED, true, true);
-$z.extend.CHAIN_STOP_DEFINED = $z.fn.makeChain($z.fn.STOP_DEFINED);
+$z.extend.CHAIN = $z.extend.makeChain($z.fn.LAST_DEFINED, false, true);
+$z.extend.CHAIN_FIRST = $z.extend.makeChain($z.fn.LAST_DEFINED, true, true);
+$z.extend.CHAIN_STOP_DEFINED = $z.extend.makeChain($z.fn.STOP_DEFINED);
 
 
 
@@ -1239,7 +1240,7 @@ $z.Constructor = {
   _base: function(def) {
     function Constructor() {
       // http://github.com/zestjs/zoe#zcreate
-      return Constructor.construct.apply(this, arguments);
+      Constructor.construct.apply(this, arguments);
     }
     return Constructor;
   },
@@ -1250,9 +1251,9 @@ $z.Constructor = {
   _integrate: function(def) {
     //the prototype property is skipped if it isn't an enumerable property
     //thus we run the extension manually in this case
-    if (Object.getOwnPropertyDescriptor) {
-      console.log(def);
-      var p = Object.getOwnPropertyDescriptor(def, 'prototype');
+    var getPropertyDescriptor = Object.getOwnPropertyDescriptor;
+    if (getPropertyDescriptor) {
+      var p = getPropertyDescriptor(def, 'prototype');
       if (p && !p.enumerable)
         $z.extend(this.prototype, def.prototype, $z.extend.deriveRules(this._extend, 'prototype'));
     }
@@ -1270,8 +1271,10 @@ $z.Constructor = {
     //important to ensure modifications not made to the underlying prototype
     for (var p in this) {
       var curProperty = this[p];
-      if (curProperty && curProperty.constructor == $z.fn)
+      if (curProperty && curProperty.constructor == $z.fn) {
         this[p] = $z.fn(curProperty.run, [curProperty]);
+        this[p].bind(this);
+      }
     }
   }
 };
