@@ -18,8 +18,8 @@
  *
  * This module works in NodeJS, AMD and the browser.
  *
- * In the case of AMD and the browser, a global '$z' is created.
- * If a '$z' global already exists, it is extended with these methods.
+ * In the case of AMD and the browser, a global 'zoe' is created.
+ * If a 'zoe' global already exists, it is extended with these methods.
  *
  *
  * Public Methods and Properties
@@ -29,97 +29,95 @@
  * Further documentation on their usage is provided with the code.
  *
  * Primary methods:
- * 1) $z.fn
- * 2) $z.extend
- * 3) $z.create
+ * 1) zoe.fn
+ * 2) zoe.extend
+ * 3) zoe.create
  *
  * Utility functions
- * -$z.log
- * -$z.dir
+ * -zoe.log
+ * -zoe.dir
  *
- * 1) $z.fn
+ * 1) zoe.fn
  *  execution functions:
- *  -$z.fn.STOP_DEFINED
- *  -$z.fn.LAST_DEFINED
- *  -$z.fn.ASYNC
+ *  -zoe.fn.STOP_DEFINED
+ *  -zoe.fn.LAST_DEFINED
+ *  -zoe.fn.ASYNC
  *
  *  helper functions:
- *  -$z.fn.executeReduce
- *  -$z.on
- *  -$z.off
+ *  -zoe.fn.executeReduce
+ *  -zoe.on
+ *  -zoe.off
  *
- * 2) $z.extend
+ * 2) zoe.extend
  *  extension functions:
- *  -$z.extend.DEFINE
- *  -$z.extend.REPLACE
- *  -$z.extend.FILL
- *  -$z.extend.DREPLACE
- *  -$z.extend.DFILL
- *  -$z.extend.IGNORE
- *  -$z.extend.STR_APPEND
- *  -$z.extend.STR_PREPEND
- *  -$z.extend.ARR_APPEND
- *  -$z.extend.ARR_PREPEND
- *  -$z.extend.APPEND
- *  -$z.extend.PREPEND
+ *  -zoe.extend.DEFINE
+ *  -zoe.extend.REPLACE
+ *  -zoe.extend.FILL
+ *  -zoe.extend.DREPLACE
+ *  -zoe.extend.DFILL
+ *  -zoe.extend.IGNORE
+ *  -zoe.extend.STR_APPEND
+ *  -zoe.extend.STR_PREPEND
+ *  -zoe.extend.ARR_APPEND
+ *  -zoe.extend.ARR_PREPEND
+ *  -zoe.extend.APPEND
+ *  -zoe.extend.PREPEND
  *
  *  function chain extension utility function:
- *  -$z.extend.makeChain
+ *  -zoe.extend.makeChain
  *
  *  function chain extension functions:
- *  -$z.extend.CHAIN
- *  -$z.extend.CHAIN_FIRST
- *  -$z.extend.CHAIN_STOP_DEFINED
+ *  -zoe.extend.CHAIN
+ *  -zoe.extend.CHAIN_FIRST
+ *  -zoe.extend.CHAIN_STOP_DEFINED
  *
- * 3) $z.create
+ * 3) zoe.create
  *  helper function:
- *  -$z.inherits
+ *  -zoe.inherits
  *
  *  core inheritor:
- *  -$z.Constructor
+ *  -zoe.Constructor
  * 
  */
-
 (function (root, factory) {
   //nodejs
   if (typeof exports === 'object')
     module.exports = factory();
-  //amd + $z global
+  //amd + zoe global
   else if (typeof define === 'function' && define.amd)
     define(function() {
-      return (root.$z = factory(root.$z));
+      return factory();
     });
-  //browser $z global
+  //browser zoe global
   else
-    root.$z = factory(root.$z);
-}(this, function ($z) {
+    root.zoe = factory();
+}(this, function() {
   
-//if a $z global already exists, extend it with these methods (used by Zest)
-$z = $z || function() { return $z.main.apply(this, arguments); }
+var zoe = {};
 
 /*
- * $z.log, $z.dir
+ * zoe.log, zoe.dir
  * Console log function existence wrappers
  * 
  */
-$z.log = $z.dir = function(){};
+zoe.log = zoe.dir = function(){};
 if (typeof console !== 'undefined') {
   if (console.log)
-    $z.log = function(str) { console.log(str); }
+    zoe.log = function(str) { console.log(str); }
   if (console.dir)
-    $z.dir = function(obj) { console.dir(obj); }
+    zoe.dir = function(obj) { console.dir(obj); }
 }
 
 
 /*
- * $z.fn
+ * zoe.fn
  * Flexible function composition
  * http://github.com/zestjs/zoe#zfn
  *
  *
  * The basic concept is that there are many situations when designing software that
  * involve the execution of arrays of functions.
- * $z.fn provides a flexible way of managing the execution of arrays of functions
+ * zoe.fn provides a flexible way of managing the execution of arrays of functions
  * or 'function chains'.
  *
  * For example,
@@ -130,24 +128,24 @@ if (typeof console !== 'undefined') {
  * 3) Logic filters involve function composition where outputs are logically
  *    combined.
  *
- * All of the above cases can be handled by the use of $z.fn.
+ * All of the above cases can be handled by the use of zoe.fn.
  *
- * $z.fn is a factory function that returns a fresh function instance, which wraps
+ * zoe.fn is a factory function that returns a fresh function instance, which wraps
  *   an array of functions.
  * It takes an optional specified execution rule and list of initial functions.
  * Additional functions can be added to the wrapper on at any time by using the f.on() syntax.
  * 
  *
  * Usage:
- *   $z.fn(executionFunction, [initialFunctions]);
- *   $z.fn(executionFunction);
- *   $z.fn([initialFunctions]);
+ *   zoe.fn(executionFunction, [initialFunctions]);
+ *   zoe.fn(executionFunction);
+ *   zoe.fn([initialFunctions]);
  * 
  * [initialFunctions]: an array of the inital functions to be provided (optional)
  * executionFunction: the main execution function to handle function execution and output (optional)
- *    when no executionFunction is provided, defaults to $z.fn.LAST_DEFINED
+ *    when no executionFunction is provided, defaults to zoe.fn.LAST_DEFINED
  *
- * output: a function instance of a $z.fn 'function chain', with the following public properties:
+ * output: a function instance of a zoe.fn 'function chain', with the following public properties:
  *   on: function(f), used to add new functions to the list of functions
  *   off: function(f), used to remove functions from the list of functions
  *   first: function(f), used to add a new function at the beginning of the list of functions
@@ -158,7 +156,7 @@ if (typeof console !== 'undefined') {
  * Example
  * -------
  *
- *  var clickEvent = $z.fn();
+ *  var clickEvent = zoe.fn();
  *  
  *  clickEvent.on(function(type) {
  *    console.log('click event fired: ' + type);
@@ -210,7 +208,7 @@ if (typeof console !== 'undefined') {
  *
  * This helper is defined as:
  *
- *    $z.fn.executeReduce(initialValue, function(output1, output2) {
+ *    zoe.fn.executeReduce(initialValue, function(output1, output2) {
  *      return combinedOutput;
  *    });
  *
@@ -223,12 +221,12 @@ if (typeof console !== 'undefined') {
  * Example
  * -------
  *
- * The default composition function used by $z.fn() is $z.fn.LAST_DEFINED.
+ * The default composition function used by zoe.fn() is zoe.fn.LAST_DEFINED.
  * This function returns the output from the last function in the list to return a non-undefined output.
  *
  * It is written as:
  *
- * $z.fn.LAST_DEFINED = $z.fn.executeReduce(function(output1, output2) {
+ * zoe.fn.LAST_DEFINED = zoe.fn.executeReduce(function(output1, output2) {
  *   return output2 !== undefined ? output2 : output1;
  * });
  *
@@ -237,15 +235,15 @@ if (typeof console !== 'undefined') {
  *
  * The full list of provided composition functions is covered below.
  *
- * $z.fn.LAST_DEFINED
- * $z.fn.STOP_DEFINED
- * $z.fn.ASYNC
+ * zoe.fn.LAST_DEFINED
+ * zoe.fn.STOP_DEFINED
+ * zoe.fn.ASYNC
  *
  * Documentation on these is given below.
  * 
  */
 
-var f = $z.fn = function(run, fns) {
+var f = zoe.fn = function(run, fns) {
   if (run instanceof Array) {
     fns = run;
     run = null;
@@ -259,7 +257,7 @@ var f = $z.fn = function(run, fns) {
   instance.constructor = f;
   
   instance.fns = fns || [];
-  instance.run = run || $z.fn.LAST_DEFINED;
+  instance.run = run || zoe.fn.LAST_DEFINED;
   
   instance.on = on;
   instance.off = off;
@@ -295,26 +293,26 @@ var first = function(fn) {
   return this;
 }
 
-/* $z.fn.executeReduce
+/* zoe.fn.executeReduce
  * 
  * A helper function in building synchronous composition functions
  * takes a "reduce" function to amalgamating synchronous outputs into a
  * single output
  *
  * Usage:
- *   $z.fn.executeReduce(startVal, function(out1, out2) {
+ *   zoe.fn.executeReduce(startVal, function(out1, out2) {
  *     return reducedOutput;
  *   });
  *
  * Example:
  *
  * Assuming a numberical output, provide the totals of all the function outputs:
- *   $z.fn.createReduction(0, function(out1, out2) {
+ *   zoe.fn.createReduction(0, function(out1, out2) {
  *     return out1 + out2;
  *   });
  *
  */
-$z.fn.executeReduce = function(startVal, reduce) {
+zoe.fn.executeReduce = function(startVal, reduce) {
   if (reduce === undefined) {
     reduce = startVal;
     startVal = undefined;
@@ -328,18 +326,18 @@ $z.fn.executeReduce = function(startVal, reduce) {
 }
 
 /*
- * $z.fn.LAST_DEFINED
+ * zoe.fn.LAST_DEFINED
  *
  * Executes all functions in the chain, returning the last non-undefined
  * output.
  *
  */
-var l = $z.fn.LAST_DEFINED = $z.fn.executeReduce(function(out1, out2) {
+var l = zoe.fn.LAST_DEFINED = zoe.fn.executeReduce(function(out1, out2) {
   return out2 !== undefined ? out2 : out1;
 });
 
 /*
- * $z.fn.STOP_DEFINED
+ * zoe.fn.STOP_DEFINED
  *
  * Runs the execution of fns, until one function returns
  * a non-undefined output.
@@ -350,7 +348,7 @@ var l = $z.fn.LAST_DEFINED = $z.fn.executeReduce(function(out1, out2) {
  * triggers an output, we ignore execution of the others.
  * 
  */
-$z.fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
+zoe.fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
   var output;
   for (var i = 0; i < fns.length; i++) {
     output = fns[i].apply(self, args);
@@ -360,14 +358,14 @@ $z.fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
   return output;
 }
 /*
- * $z.fn.ASYNC
+ * zoe.fn.ASYNC
  *
  * Allows for the creation of an asynchronous step function, with the
  * last argument to each successive function being the 'next' callback
  * into the next function or final completion.
  *
  * Example:
- *   var f = $z.fn($z.fn.ASYNC);
+ *   var f = zoe.fn(zoe.fn.ASYNC);
  *
  *   f.on(function(any, number, of, args, next) {
  *     setTimeout(complete, 5000);
@@ -382,7 +380,7 @@ $z.fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
  *   }); // waits 5 seconds, then prints complete
  *
  */
-$z.fn.ASYNC = function ASYNC(self, args, fns) {
+zoe.fn.ASYNC = function ASYNC(self, args, fns) {
   var i = 0;
   var complete;
   if (typeof args[args.length - 1] == 'function')
@@ -399,11 +397,11 @@ $z.fn.ASYNC = function ASYNC(self, args, fns) {
 }
 
 /*
- * $z.on
+ * zoe.on
  *
  * Shorthand for converting any function to a chain
- * Effectively duck punching using $z.fn, but if the
- * function is already a $z.fn, it is just added to the
+ * Effectively duck punching using zoe.fn, but if the
+ * function is already a zoe.fn, it is just added to the
  * list (using less memory than recursive duck punching)
  *
  * Usage:
@@ -412,32 +410,32 @@ $z.fn.ASYNC = function ASYNC(self, args, fns) {
  * var obj = { sayHi: function() {} }
  *
  * //we can easily attach chains to its functions:
- * $z.on(obj, 'sayHi', function() {
+ * zoe.on(obj, 'sayHi', function() {
  * });
  *
  * Which is identical to:
- * obj.sayHi = $z.fn(obj.sayHi);
+ * obj.sayHi = zoe.fn(obj.sayHi);
  * obj.sayHi.on(function() {
  * });
  *
- * The corresponding $z.off method works as with $z.fn() off.
+ * The corresponding zoe.off method works as with zoe.fn() off.
  *
  */
-$z.on = function(obj, name, f) {
+zoe.on = function(obj, name, f) {
   var val = obj[name];
-  if (!val || val.constructor != $z.fn || val.run != $z.fn.LAST_DEFINED)
-    obj[name] = $z.fn(val ? [val] : []);
+  if (!val || val.constructor != zoe.fn || val.run != zoe.fn.LAST_DEFINED)
+    obj[name] = zoe.fn(val ? [val] : []);
   obj[name].on(f);
 }
-$z.off = function(obj, name, f) {
-  if (obj[name].constructor == $z.fn)
+zoe.off = function(obj, name, f) {
+  if (obj[name].constructor == zoe.fn)
     return obj[name].off(f);
 }
 
 
 
 /*
- * $z.extend
+ * zoe.extend
  * http://github.com/zestjs/zoe#zextend
  *
  * Extend obj A by merging properties from obj B
@@ -445,16 +443,16 @@ $z.off = function(obj, name, f) {
  *
  * Usage:
  *
- * $z.extend(objA, objB, [rules,]);
+ * zoe.extend(objA, objB, [rules,]);
  *
  * objA: the object to modify (the host object)
  * objB: the object with the new properties to add (the extending object)
  * rules: a rule function or object map.
- *        typically rule functions are constant functions located at $z.extend.RULE
+ *        typically rule functions are constant functions located at zoe.extend.RULE
  *        for convenience, these can also be referenced by a rule string, 'RULE'
  *
  *
- * Without any rules, $z.extend does a straight merge, but will report an
+ * Without any rules, zoe.extend does a straight merge, but will report an
  * error as soon as there is a property name clash and need for an override.
  * The error made is not thrown, but is a non-critical log message, but this
  * should always be resolved.
@@ -483,9 +481,9 @@ $z.off = function(obj, name, f) {
  *
  * If output is undefined, the property is not written at all.
  * 
- * For example, $z.extend.REPLACE, is the rule function defined by:
+ * For example, zoe.extend.REPLACE, is the rule function defined by:
  *
- * $z.extend.REPLACE = function(p, q) {
+ * zoe.extend.REPLACE = function(p, q) {
  *   return q;
  * }
  *
@@ -501,11 +499,11 @@ $z.off = function(obj, name, f) {
  * For example:
  *
  * {
- *   '*': $z.extend.REPLACE
- *   'myproperty': $z.extend.IGNORE
+ *   '*': zoe.extend.REPLACE
+ *   'myproperty': zoe.extend.IGNORE
  * }
  * 
- * Both $z.extend.REPLACE and $.extend.IGNORE are provided rule functions.
+ * Both zoe.extend.REPLACE and $.extend.IGNORE are provided rule functions.
  *
  * In the above example, all properties get replaced, except for the property
  * 'myproperty' which gets ignored entirely.
@@ -514,8 +512,8 @@ $z.off = function(obj, name, f) {
  * Depth can also be specified in the rules specification. For example:
  *
  * {
- *   'object_property': $z.extend
- *   'object_property.*': $z.extend.REPLACE
+ *   'object_property': zoe.extend
+ *   'object_property.*': zoe.extend.REPLACE
  * }
  *
  * The above will extend 'object_property', passing the rule specification
@@ -531,32 +529,32 @@ $z.off = function(obj, name, f) {
  *
  * In this case, an underscore notation can be used.
  *
- * __propertyName -> use the $z.extend.APPEND rule
- * propertyName__ -> use the $z.extend.PREPEND rule
- * __propertyName__ -> use the $z.extend.REPLACE rule
+ * __propertyName -> use the zoe.extend.APPEND rule
+ * propertyName__ -> use the zoe.extend.PREPEND rule
+ * __propertyName__ -> use the zoe.extend.REPLACE rule
  *
  *
  * For example:
  *
  *   var a = { text: 'hello ' };
  *
- *   $z.extend(a, { __text: 'world' });
+ *   zoe.extend(a, { __text: 'world' });
  *
  *   //outputs a = { text: 'hello world' }
  *
- * Will automatically apply the $z.extend.APPEND rule to the 'text' property,
+ * Will automatically apply the zoe.extend.APPEND rule to the 'text' property,
  * as if it were written:
  *
- *   $z.extend(a, { text: 'world'}, { text: $z.extend.STR_APPEND });
+ *   zoe.extend(a, { text: 'world'}, { text: zoe.extend.STR_APPEND });
  *
  * By default, the APPEND rule will:
- *  - chain together functions as $z.fn() chains
+ *  - chain together functions as zoe.fn() chains
  *  - extend objects with replacement
  *  - append strings
  *  - concatenate arrays
  *
  * By default, the PREPEND rule will:
- *  - chain together functions as $z.fn() chains, but first in the execution chain
+ *  - chain together functions as zoe.fn() chains, but first in the execution chain
  *  - extend objects with the fill rule, replacing properties not already defined only
  *  - prepend strings
  *  - reverse concatenate arrays
@@ -566,81 +564,81 @@ $z.off = function(obj, name, f) {
  * Provided Rule Functions
  * -----------------------
  *
- * $z.extend provides a number of override functions to use. These are:
+ * zoe.extend provides a number of override functions to use. These are:
  *
- *   $z.extend.DEFINE
+ *   zoe.extend.DEFINE
  *   -create a property, but throw a soft error and ignore if the property already exists.
  *   -this is the default rule for extension when no other rule is specified
  * 
- *   $z.extend.REPLACE
+ *   zoe.extend.REPLACE
  *   -direct replace, by reference for objects and functions
  * 
- *   $z.extend.FILL
+ *   zoe.extend.FILL
  *   -only adds the value if it doesn't already exist.
  *   -This method effectively 'fills in' any properties which aren't already
  *    defined.
  *
- *   $z.extend.DREPLACE (deep replace)
+ *   zoe.extend.DREPLACE (deep replace)
  *   -direct replace for all property types except object
  *   -when a native object is encountered for replacement,
  *    it is in turn recursively replaced onto the object, creating a deep copying.
  *
- *   $z.extend.DFILL (deep fill)
+ *   zoe.extend.DFILL (deep fill)
  *   -analogously, provides property values when not already there, when not an object.
  *   -when an object is provided, it fills in properties on the subobject that aren't
  *    already defined
  *
- *   $z.extend.IGNORE
+ *   zoe.extend.IGNORE
  *   -completely leaves the property out of the extension process
  * 
- *   $z.extend.STR_APPEND
+ *   zoe.extend.STR_APPEND
  *   -assuming properties are strings, it appends them together
  *
- *   $z.extend.STR_PREPEND
+ *   zoe.extend.STR_PREPEND
  *   -assuming properties are strings, the reverse concatenation of the above
  *   
- *   $z.extend.ARR_APPEND
+ *   zoe.extend.ARR_APPEND
  *   -assuming properties are arrays, they are concatenated
  *   
- *   $z.extend.ARR_PREPEND
+ *   zoe.extend.ARR_PREPEND
  *   -assuming properties are arrays, they are reverse concatenated
  *
  *
- * $z.fn Extension Rules:
+ * zoe.fn Extension Rules:
  *
- * A natural way to extend functions is to convert them into instances of $z.fn, if not
+ * A natural way to extend functions is to convert them into instances of zoe.fn, if not
  * already, and have the extension added to the list of functions in the execution chain.
  *
- * The following extension rules for $z.fn allow this
+ * The following extension rules for zoe.fn allow this
  *
- *   $z.extend.CHAIN
- *   -if not already a chain, convert the host property into a $z.fn instance, with execution
- *    function, $z.fn.LAST_DEFINED
+ *   zoe.extend.CHAIN
+ *   -if not already a chain, convert the host property into a zoe.fn instance, with execution
+ *    function, zoe.fn.LAST_DEFINED
  *   -adds the extend property to the chain with the 'on' method
  *
- *   $z.extend.CHAIN_FIRST
+ *   zoe.extend.CHAIN_FIRST
  *   -as with chain, but applies the 'first' method to add the item at the beginning of the chain
  *
  * When extending properties, you may wish to use another chain to do the extension. In this case,
- * the helper function, $z.extend.makeChain will generate an extension function base on the provided
- * $z.fn execution function.
+ * the helper function, zoe.extend.makeChain will generate an extension function base on the provided
+ * zoe.fn execution function.
  *
- *   $z.extend.makeChain(EXECUTION_FUNCTION, first)
+ *   zoe.extend.makeChain(EXECUTION_FUNCTION, first)
  *
- *   EXECUTION_FUNCTION is the $z.fn execution function to use
+ *   EXECUTION_FUNCTION is the zoe.fn execution function to use
  *   first is an optional boolean indicating whether the chain should use 'on' or 'first'
  *
- * For example, $z.extend.CHAIN is created by:
+ * For example, zoe.extend.CHAIN is created by:
  *
- *   $z.extend.CHAIN = $z.extend.makeChain($z.fn.LAST_DEFINED)
+ *   zoe.extend.CHAIN = zoe.extend.makeChain(zoe.fn.LAST_DEFINED)
  *
  *
  * Append and Prepend Rules:
  *
- *   $z.extend.APPEND
+ *   zoe.extend.APPEND
  *   -chains functions, replaces into objects, appends strings, concatenates arrays
  *
- *   $z.extend.PREPEND
+ *   zoe.extend.PREPEND
  *   -chains functions with 'first', fills objects where properties not defined, prepends strings
  *    and reverse concatenates arrays
  *
@@ -648,11 +646,11 @@ $z.off = function(obj, name, f) {
  *
  * Making custom rules:
  *
- * Adding additional rule functions onto $z.extend is encouraged, but the above should
+ * Adding additional rule functions onto zoe.extend is encouraged, but the above should
  * never be changed.
  * 
  * When the type checking for an extend method is very specific, simply throw an error
- * to indicate a bad input. This will be caught by $z.extend and output as a console.log
+ * to indicate a bad input. This will be caught by zoe.extend and output as a console.log
  * warning instead.
  *
  *
@@ -661,15 +659,15 @@ $z.off = function(obj, name, f) {
  *
  * 1. Cloning an object at the first level:
  *
- *    $z.extend({}, obj);
+ *    zoe.extend({}, obj);
  *
  * 2. Cloning an object to all depths:
  *
- *    $z.extend({}, obj, $z.extend.DREPLACE);
+ *    zoe.extend({}, obj, zoe.extend.DREPLACE);
  *
  * 3. Providing default configuration on a nested configuration object:
  *
- *    $z.extend(config, default_config, $z.extend.DEEP_FILL);
+ *    zoe.extend(config, default_config, zoe.extend.DEEP_FILL);
  *
  * 4. Custom extension with automatic type adjustment
  *
@@ -683,8 +681,8 @@ $z.off = function(obj, name, f) {
  *      css: 'color: red;'
  *    }
  *
- *    $z.extend(Heading, Red, {
- *      css: $z.extend.STR_APPEND
+ *    zoe.extend(Heading, Red, {
+ *      css: zoe.extend.STR_APPEND
  *    });
  *
  *    returns Heading = {
@@ -695,12 +693,12 @@ $z.off = function(obj, name, f) {
  *    };
  *
  *
- *    This demonstrates the primary use case for $z.extend rules -
+ *    This demonstrates the primary use case for zoe.extend rules -
  *    the ability to have a flexible object inheritance mechanism for web components.
  * 
  */
 
-var e = $z.extend = function extend(a, b, rule) {
+var e = zoe.extend = function extend(a, b, rule) {
   
   var ruleObj;
   if (typeof rule == 'object') {
@@ -718,25 +716,25 @@ var e = $z.extend = function extend(a, b, rule) {
       var lastUnderscores = p.substr(pLength - 2, 2) == '__';
       
       //a fancy (minifies better) way of setting the underscore rules to the appropriate extend function
-      var underscoreRule = (firstUnderscores && !lastUnderscores && (p = p.substr(2)) && $z.extend.APPEND)
-        || (!firstUnderscores && lastUnderscores && (p = p.substr(0, pLength - 2)) && $z.extend.PREPEND)
-        || (firstUnderscores && lastUnderscores && (p = p.substr(2, pLength - 4)) && $z.extend.REPLACE);
+      var underscoreRule = (firstUnderscores && !lastUnderscores && (p = p.substr(2)) && zoe.extend.APPEND)
+        || (!firstUnderscores && lastUnderscores && (p = p.substr(0, pLength - 2)) && zoe.extend.PREPEND)
+        || (firstUnderscores && lastUnderscores && (p = p.substr(2, pLength - 4)) && zoe.extend.REPLACE);
       
       //apply the right rule function
-      var curRule = (underscoreRule || rule || (ruleObj && (ruleObj[p] || ruleObj['*'])) || $z.extend.DEFINE);
+      var curRule = (underscoreRule || rule || (ruleObj && (ruleObj[p] || ruleObj['*'])) || zoe.extend.DEFINE);
       
       //allow rules to be strings
       if (typeof curRule == 'string')
-        curRule = $z.extend[curRule];
+        curRule = zoe.extend[curRule];
       
       try {
-        out = curRule(a[p], v, ruleObj && $z.extend.deriveRules(ruleObj, p));
+        out = curRule(a[p], v, ruleObj && zoe.extend.deriveRules(ruleObj, p));
       }
       catch (er) {
-        $z.dir(a);
-        $z.dir(b);
-        $z.dir($z.extend.deriveRules(rule, p));
-        $z.log('$z.extend: "' + p + '" override error. \n ->' + (er.message || er));
+        zoe.dir(a);
+        zoe.dir(b);
+        zoe.dir(zoe.extend.deriveRules(rule, p));
+        zoe.log('zoe.extend: "' + p + '" override error. \n ->' + (er.message || er));
       }
       if (out !== undefined)
         a[p] = out;
@@ -744,89 +742,89 @@ var e = $z.extend = function extend(a, b, rule) {
   return a;
 }
 
-$z.extend.EXTEND = $z.extend;
-$z.extend.DEFINE = function DEFINE(a, b) {
+zoe.extend.EXTEND = zoe.extend;
+zoe.extend.DEFINE = function DEFINE(a, b) {
   if (a !== undefined)
     throw 'No override specified.';
   else
     return b;
 }
-var r = $z.extend.REPLACE = function REPLACE(a, b) {
+var r = zoe.extend.REPLACE = function REPLACE(a, b) {
   if (b !== undefined)
     return b;
   else
     return a;
 }
-$z.extend.FILL = function FILL(a, b) {
+zoe.extend.FILL = function FILL(a, b) {
   if (a === undefined)
     return b;
   else
     return a;
 }
-var i = $z.extend.IGNORE = function IGNORE(a, b) {}
-$z.extend.APPEND = function APPEND(a, b, rules) {
+var i = zoe.extend.IGNORE = function IGNORE(a, b) {}
+zoe.extend.APPEND = function APPEND(a, b, rules) {
   if (b.constructor === Object)
-    return $z.extend(a || {}, b, $z.extend.REPLACE);
+    return zoe.extend(a || {}, b, zoe.extend.REPLACE);
   else if (typeof b == 'function')
-    return $z.extend.CHAIN(a, b);
+    return zoe.extend.CHAIN(a, b);
   else if (typeof b == 'string')
-    return $z.extend.STR_APPEND(a, b);
+    return zoe.extend.STR_APPEND(a, b);
   else if (b instanceof Array)
-    return $z.extend.ARR_APPEND(a, b);
+    return zoe.extend.ARR_APPEND(a, b);
   else
     return b;
 }
-$z.extend.PREPEND = function PREPEND(a, b) {
+zoe.extend.PREPEND = function PREPEND(a, b) {
   if (b.constructor === Object)
-    return $z.extend(a || {}, b, $z.extend.FILL);
+    return zoe.extend(a || {}, b, zoe.extend.FILL);
   else if (typeof b == 'function')
-    return $z.extend.CHAIN_FIRST(a, b);
+    return zoe.extend.CHAIN_FIRST(a, b);
   else if (typeof b == 'string')
-    return $z.extend.STR_PREPEND(a, b);
+    return zoe.extend.STR_PREPEND(a, b);
   else if (b instanceof Array)
-    return $z.extend.ARR_PREPEND(a, b);
+    return zoe.extend.ARR_PREPEND(a, b);
   else
     return b;
 }
-$z.extend.DREPLACE = function DREPLACE(a, b) {
+zoe.extend.DREPLACE = function DREPLACE(a, b) {
   if (b.constructor === Object) {
     if (typeof a === 'undefined')
       a = {};
-    return $z.extend(a, b, $z.extend.DREPLACE);
+    return zoe.extend(a, b, zoe.extend.DREPLACE);
   }
   else
     return b;
 }
-$z.extend.DFILL = function DFILL(a, b) {
+zoe.extend.DFILL = function DFILL(a, b) {
   if (b.constructor === Object) {
     if (typeof a === 'undefined')
       a = {};
-    return e(a, b, $z.extend.DFILL);
+    return e(a, b, zoe.extend.DFILL);
   }
   else
     return typeof a === 'undefined' ? b : a;
 }
-$z.extend.ARR_APPEND = function ARR_APPEND(a, b) {
+zoe.extend.ARR_APPEND = function ARR_APPEND(a, b) {
   return (a || []).concat(b);
 }
-$z.extend.ARR_PREPEND = function ARR_PREPEND(a, b) {
+zoe.extend.ARR_PREPEND = function ARR_PREPEND(a, b) {
   return b.concat(a || []);
 }
-$z.extend.STR_APPEND = function STR_APPEND(a, b) {
+zoe.extend.STR_APPEND = function STR_APPEND(a, b) {
   return a ? a + b : b;
 }
-$z.extend.STR_PREPEND = function STR_PREPEND(a, b) {
+zoe.extend.STR_PREPEND = function STR_PREPEND(a, b) {
   return b + a;
 }
 
 
 /*
  create a rule for a property object from a rules object
- eg rules = { 'prototype.init': $z.extend.APPEND, '*.init': $z.extend.REPLACE, '*.*': $z.extend.REPLACE }
+ eg rules = { 'prototype.init': zoe.extend.APPEND, '*.init': zoe.extend.REPLACE, '*.*': zoe.extend.REPLACE }
  
- then deriveRule(rules, 'prototype') == { 'init': $z.extend.APPEND, 'init': $z.extend.REPLACE, '*.*': $z.extend.REPLACE }
+ then deriveRule(rules, 'prototype') == { 'init': zoe.extend.APPEND, 'init': zoe.extend.REPLACE, '*.*': zoe.extend.REPLACE }
 */
-$z.extend.deriveRules = function(rules, p) {
+zoe.extend.deriveRules = function(rules, p) {
   var newRules = {};
   
   for (var r in rules) {
@@ -846,13 +844,13 @@ $z.extend.deriveRules = function(rules, p) {
   return newRules;
 }
 /*
- * $z.extend.makeChain
+ * zoe.extend.makeChain
  *
- * Creates a $z.extend rule that will automatically
+ * Creates a zoe.extend rule that will automatically
  * combine functions with the given execution function
  *
  * Usage:
- *   $z.extend.makeChain(EXECUTION_FUNCTION [, first]);
+ *   zoe.extend.makeChain(EXECUTION_FUNCTION [, first]);
  *
  * When the 'first' parameter is provided, this creates
  * a reverse chain putting the new items at the beginning of the
@@ -861,7 +859,7 @@ $z.extend.deriveRules = function(rules, p) {
  * The 'ignoreExecution' property exists to check if we want to
  * override the execution function on the chain if one already exists.
  *
- * $z.extend.CHAIN is a weak extension rule as it will append to whatever
+ * zoe.extend.CHAIN is a weak extension rule as it will append to whatever
  * chain already exists on the host object, by setting this flag to true.
  *
  * Example:
@@ -877,18 +875,18 @@ $z.extend.deriveRules = function(rules, p) {
  *     }
  *   }
  *
- *   $z.extend(Load, LoadExtra, {
- *     load: $z.fn.makeChain($z.fn.ASYNC)
+ *   zoe.extend(Load, LoadExtra, {
+ *     load: zoe.fn.makeChain(zoe.fn.ASYNC)
  *   });
  *
  *   Load.load(); // takes 3 seconds to complete
  *
  */
 
-$z.extend.makeChain = function(executionFunction, first, ignoreExecution) {
+zoe.extend.makeChain = function(executionFunction, first, ignoreExecution) {
   return function(a, b) {
-    if (!a || a.constructor != $z.fn || (!ignoreExecution && a.run != executionFunction))
-      a = $z.fn(executionFunction, !a ? [] : [a]);
+    if (!a || a.constructor != zoe.fn || (!ignoreExecution && a.run != executionFunction))
+      a = zoe.fn(executionFunction, !a ? [] : [a]);
     
     if (first)
       a.first(b);
@@ -899,31 +897,31 @@ $z.extend.makeChain = function(executionFunction, first, ignoreExecution) {
   }
 }
 
-// create the $z.extend rules for the corresponding function chain methods.
-$z.extend.CHAIN = $z.extend.makeChain($z.fn.LAST_DEFINED, false, true);
-$z.extend.CHAIN_FIRST = $z.extend.makeChain($z.fn.LAST_DEFINED, true, true);
-$z.extend.CHAIN_STOP_DEFINED = $z.extend.makeChain($z.fn.STOP_DEFINED);
+// create the zoe.extend rules for the corresponding function chain methods.
+zoe.extend.CHAIN = zoe.extend.makeChain(zoe.fn.LAST_DEFINED, false, true);
+zoe.extend.CHAIN_FIRST = zoe.extend.makeChain(zoe.fn.LAST_DEFINED, true, true);
+zoe.extend.CHAIN_STOP_DEFINED = zoe.extend.makeChain(zoe.fn.STOP_DEFINED);
 
 
 
 /*
- * $z.create
+ * zoe.create
  * JavaScript object inheritance
  * http://github.com/zestjs/zoe#zcreate
  *
  * Usage:
  * 
- *   $z.create(def)
+ *   zoe.create(def)
  *   Creates a new instance of the class defined by def.
  *
- *   $z.create([inherits], def)
+ *   zoe.create([inherits], def)
  *   Creates a new instance of the class defined by def, with the given inheritance.
  *
- * $z.create simply uses $z.extend to copy the def into a new object.
+ * zoe.create simply uses zoe.extend to copy the def into a new object.
  *
  * Example:
  *
- *   $z.create({hello: 'world'});
+ *   zoe.create({hello: 'world'});
  *
  * Will simply copy the definition object, and output the exact copy.
  *
@@ -931,7 +929,7 @@ $z.extend.CHAIN_STOP_DEFINED = $z.extend.makeChain($z.fn.STOP_DEFINED);
  * onto the target object.
  *
  * There are then 7 special optional properties on the definition object which will be picked
- * up when performing $z.create. These properties allow for a natural but flexible class
+ * up when performing zoe.create. These properties allow for a natural but flexible class
  * inheritance model in JavaScript
  *
  *   1. _base:
@@ -948,19 +946,19 @@ $z.extend.CHAIN_STOP_DEFINED = $z.extend.makeChain($z.fn.STOP_DEFINED);
  *
  *   2. _extend:
  *
- *     If an _extend property is provided, this property will be used as the $z.extend rules specification.
+ *     If an _extend property is provided, this property will be used as the zoe.extend rules specification.
  *     By default, this _extend object is automatically overwritten by any successive _extend properties implemented.
  *     In this way, a class can hold its own extensible property extension rules.
  *
  *   3. _implement:
  *
- *     This acts in exactly the same way as calling $z.create with an array of inheritors.
+ *     This acts in exactly the same way as calling zoe.create with an array of inheritors.
  *
  *   4. _reinherit:
  *
  *     Rarely used, merely a technical formality for flexibility in the diamond problem.
  *     
- *     To avoid the diamond problem, inheritance is tracked during the $z.create call. Double inheritance
+ *     To avoid the diamond problem, inheritance is tracked during the zoe.create call. Double inheritance
  *     is then avoided. If a class definition can be implemented multiple times on the same object,
  *     set the _reinherit flag to true.
  *
@@ -978,7 +976,7 @@ $z.extend.CHAIN_STOP_DEFINED = $z.extend.makeChain($z.fn.STOP_DEFINED);
  *         this.dynamicProperty = 'hello';
  *     }
  *
- *     createDefinition is the primary definition provided into $z.create.
+ *     createDefinition is the primary definition provided into zoe.create.
  *
  *     makeDefinition is the definition currently being implemented from the _implement array, and is
  *     the same as the definition that would define the above _make function.
@@ -1001,14 +999,14 @@ $z.extend.CHAIN_STOP_DEFINED = $z.extend.makeChain($z.fn.STOP_DEFINED);
  *     }
  *     
  *     makeDefinition: the current definition being implemented
- *     createDefinition: the primary definition in $z.create
+ *     createDefinition: the primary definition in zoe.create
  *     'this': is bound to the output object
  *     
  *     return value:
  *     In some rare cases, it can be necessary to perform some mapping of the definition object first.
  *     In this case, a derived definition object can be returned which will be used instead.
  *     The primary use case for this is to allow standard JavaScript constructors as _implement items
- *     when implementing $z.constructor objects.
+ *     when implementing zoe.constructor objects.
  *
  *   7. _built:
  *
@@ -1027,16 +1025,16 @@ $z.extend.CHAIN_STOP_DEFINED = $z.extend.makeChain($z.fn.STOP_DEFINED);
  *        This is because definition objects are designed to be immutable, and should be able to be implemented
  *        with the same results at any later points.
  *
- *        The only modification made by $z.create is automatically appending the _implement array of the primary
- *        definition when the inheritor form of $z.create is used - $z.create([inheritors], definition);
+ *        The only modification made by zoe.create is automatically appending the _implement array of the primary
+ *        definition when the inheritor form of zoe.create is used - zoe.create([inheritors], definition);
  *
  * 
  */
-$z.create = function(inherits, definition) {
+zoe.create = function(inherits, definition) {
   definition = inheritCheck(inherits, definition);
   
   if (definition._definition)
-    throw "Cannot use $z.create on an instance of $z.create";
+    throw "Cannot use zoe.create on an instance of zoe.create";
   
   //find base definition (first base defined)
   var obj;
@@ -1062,8 +1060,8 @@ $z.create = function(inherits, definition) {
   
   //state variables
   var _inherited = [];
-  var _built = $z.fn();
-  var _integrate = $z.fn();
+  var _built = zoe.fn();
+  var _integrate = zoe.fn();
   
   _integrate._this = _built._this = obj;
   
@@ -1074,10 +1072,10 @@ $z.create = function(inherits, definition) {
     if (def._integrate)
       _integrate.on(def._integrate);
     
-    $z.extend(obj, def, _extend);
+    zoe.extend(obj, def, _extend);
     
     if (def._extend)
-      $z.extend(_extend, def._extend, $z.extend.REPLACE);
+      zoe.extend(_extend, def._extend, zoe.extend.REPLACE);
   
     if (def._make)
       def._make.call(obj, definition, def);
@@ -1118,8 +1116,8 @@ var implementLoop = function(def, loop, skip) {
     for (var i = 0, len = def._implement.length; i < len; i++) {
       var item = def._implement[i];
       if (!item) {
-        $z.dir(def);
-        $z.log('Implementor not defined!');
+        zoe.dir(def);
+        zoe.log('Implementor not defined!');
       }
 
       if (item._definition) {
@@ -1140,9 +1138,9 @@ var implementLoop = function(def, loop, skip) {
 /*
  * Helper to allow for flexible forms of
  *
- * $z.implement([], {})
- * $z.implement({})
- * $z.implement([])
+ * zoe.implement([], {})
+ * zoe.implement({})
+ * zoe.implement([])
  *
  * All compiling into the definition
  *
@@ -1158,17 +1156,17 @@ var inheritCheck = function(inherits, definition) {
 }
 
 /*
- * $z.inherits
+ * zoe.inherits
  *
  * A utility function to determine if an object has inherited
  * the provided definition.
  *
  */
-$z.inherits = function(obj, def) {
+zoe.inherits = function(obj, def) {
   if (obj._definition)
-    return $z.inherits(obj._definition, def);
+    return zoe.inherits(obj._definition, def);
   if (def._definition)
-    return $z.inherits(obj, def._definition);
+    return zoe.inherits(obj, def._definition);
     
   var match = false;
   implementLoop(obj, function(item) {
@@ -1184,15 +1182,15 @@ $z.inherits = function(obj, def) {
 
 
 /*
- * $z.Constructor
+ * zoe.Constructor
  * http://github.com/zestjs/zoe#zconstructor
  *
- * A base inheritor definition for $z.create that allows for javascript prototype construction
+ * A base inheritor definition for zoe.create that allows for javascript prototype construction
  * such that we can create a class that can be instantiated with the new keyword.
  *
  * Usage:
  *
- *   var Obj = $z.create([$z.Constructor], {
+ *   var Obj = zoe.create([zoe.Constructor], {
  *     construct: function(args) {
  *     },
  *     prototype: {
@@ -1202,29 +1200,29 @@ $z.inherits = function(obj, def) {
  *
  *   var p = new Obj(args);
  *
- * In this way, $z.create and $z.Constructor provide a convenience method for
+ * In this way, zoe.create and zoe.Constructor provide a convenience method for
  * building up constructable prototypes with multiple inheritance through definition objects.
  *
- * Additionally, once $z.Constructor has been implemented, standard JavaScript classes written
- * natively can also be extended by adding them into the $z.create implement list after $z.Constructor.
+ * Additionally, once zoe.Constructor has been implemented, standard JavaScript classes written
+ * natively can also be extended by adding them into the zoe.create implement list after zoe.Constructor.
  * 
  *
  * Extension
  * ---------
  *
  * By default, the prototype object is extended with any new properties.
- * The construct function is by default chained as an instance of $z.fn() so that
+ * The construct function is by default chained as an instance of zoe.fn() so that
  * many construct hooks can be created by each inheritor, all under obj.construct().
  *
- * The standard extension rules for $z.create apply. Thus, to create an extension
+ * The standard extension rules for zoe.create apply. Thus, to create an extension
  * rule on the prototype, simply add the rule to _extend.
  *
  * For example, an init event / chain:
  *
  * var def = {
- *   _implement: [$z.Constructor],
+ *   _implement: [zoe.Constructor],
  *   _extend: {
- *     'prototype.init': $z.extend.CHAIN
+ *     'prototype.init': zoe.extend.CHAIN
  *   },
  *   construct: function() {
  *     this.init();
@@ -1236,7 +1234,7 @@ $z.inherits = function(obj, def) {
  * }
  *
  */
-$z.Constructor = {
+zoe.Constructor = {
   _base: function(def) {
     function Constructor() {
       // http://github.com/zestjs/zoe#zcreate
@@ -1255,7 +1253,7 @@ $z.Constructor = {
     if (getPropertyDescriptor) {
       var p = getPropertyDescriptor(def, 'prototype');
       if (p && !p.enumerable)
-        $z.extend(this.prototype, def.prototype, $z.extend.deriveRules(this._extend, 'prototype'));
+        zoe.extend(this.prototype, def.prototype, zoe.extend.deriveRules(this._extend, 'prototype'));
     }
 
     //allow for working with standard prototypal inheritance as well    
@@ -1271,13 +1269,13 @@ $z.Constructor = {
     //important to ensure modifications not made to the underlying prototype
     for (var p in this) {
       var curProperty = this[p];
-      if (curProperty && curProperty.constructor == $z.fn) {
-        this[p] = $z.fn(curProperty.run, [curProperty]);
+      if (curProperty && curProperty.constructor == zoe.fn) {
+        this[p] = zoe.fn(curProperty.run, [curProperty]);
         this[p].bind(this);
       }
     }
   }
 };
 
-return $z;
+return zoe;
 }));
