@@ -380,7 +380,7 @@ zoe.fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
  *   }); // waits 5 seconds, then prints complete
  *
  */
-zoe.fn.ASYNC = function ASYNC(self, args, fns) {
+zoe.fn.ASYNC = zoe.fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var i = 0;
   var complete;
   if (typeof args[args.length - 1] == 'function')
@@ -394,6 +394,18 @@ zoe.fn.ASYNC = function ASYNC(self, args, fns) {
     }
   }
   return makeNext(0)();
+}
+
+zoe.fn.ASYNC_SIM = function ASYNC_SIM(self, args, fns) {
+  var completed = 0;
+  var complete;
+  if (typeof args[args.length - 1] == 'function')
+    complete = args.pop();
+  for (var i = 0; i < fns.length; i++)
+    fns[i].apply(self, args.concat([function() {
+      if (++completed == fns.length)
+        complete();
+    }]));
 }
 
 /*
