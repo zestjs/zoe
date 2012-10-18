@@ -27,6 +27,7 @@
  *
  * The module defines the following methods.
  * Further documentation on their usage is provided with the code.
+ * Note, for code minification, 'zoe_extend' is used instead of zoe.extend, and 'zoe_fn' is used instead of zoe.fn. These are public interfaces.
  *
  * Primary methods:
  * 1) zoe.fn
@@ -243,7 +244,7 @@ if (typeof console !== 'undefined') {
  * 
  */
 
-var f = zoe.fn = function(run, fns) {
+var zoe_fn = zoe.fn = function(run, fns) {
   if (run instanceof Array) {
     fns = run;
     run = null;
@@ -254,10 +255,10 @@ var f = zoe.fn = function(run, fns) {
     return instance.run(instance._this || this, Array.prototype.splice.call(arguments, 0), instance.fns);
   }
   
-  instance.constructor = f;
+  instance.constructor = zoe_fn;
   
   instance.fns = fns || [];
-  instance.run = run || zoe.fn.LAST_DEFINED;
+  instance.run = run || zoe_fn.LAST_DEFINED;
   
   instance.on = on;
   instance.off = off;
@@ -312,7 +313,7 @@ var first = function(fn) {
  *   });
  *
  */
-zoe.fn.executeReduce = function(startVal, reduce) {
+zoe_fn.executeReduce = function(startVal, reduce) {
   if (reduce === undefined) {
     reduce = startVal;
     startVal = undefined;
@@ -332,7 +333,7 @@ zoe.fn.executeReduce = function(startVal, reduce) {
  * output.
  *
  */
-var l = zoe.fn.LAST_DEFINED = zoe.fn.executeReduce(function(out1, out2) {
+var l = zoe_fn.LAST_DEFINED = zoe_fn.executeReduce(function(out1, out2) {
   return out2 !== undefined ? out2 : out1;
 });
 
@@ -348,7 +349,7 @@ var l = zoe.fn.LAST_DEFINED = zoe.fn.executeReduce(function(out1, out2) {
  * triggers an output, we ignore execution of the others.
  * 
  */
-zoe.fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
+zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
   var output;
   for (var i = 0; i < fns.length; i++) {
     output = fns[i].apply(self, args);
@@ -380,7 +381,7 @@ zoe.fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
  *   }); // waits 5 seconds, then prints complete
  *
  */
-zoe.fn.ASYNC = zoe.fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
+zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var i = 0;
   var complete;
   if (typeof args[args.length - 1] == 'function')
@@ -396,7 +397,7 @@ zoe.fn.ASYNC = zoe.fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   return makeNext(0)();
 }
 
-zoe.fn.ASYNC_SIM = function ASYNC_SIM(self, args, fns) {
+zoe_fn.ASYNC_SIM = function ASYNC_SIM(self, args, fns) {
   var completed = 0;
   var complete;
   if (typeof args[args.length - 1] == 'function')
@@ -435,12 +436,12 @@ zoe.fn.ASYNC_SIM = function ASYNC_SIM(self, args, fns) {
  */
 zoe.on = function(obj, name, f) {
   var val = obj[name];
-  if (!val || val.constructor != zoe.fn || val.run != zoe.fn.LAST_DEFINED)
-    obj[name] = zoe.fn(val ? [val] : []);
+  if (!val || val.constructor != zoe_fn || val.run != zoe_fn.LAST_DEFINED)
+    obj[name] = zoe_fn(val ? [val] : []);
   obj[name].on(f);
 }
 zoe.off = function(obj, name, f) {
-  if (obj[name].constructor == zoe.fn)
+  if (obj[name].constructor == zoe_fn)
     return obj[name].off(f);
 }
 
@@ -648,12 +649,17 @@ zoe.off = function(obj, name, f) {
  * Append and Prepend Rules:
  *
  *   zoe.extend.APPEND
- *   -chains functions, replaces into objects, appends strings, concatenates arrays
+ *   -chains functions, replaces objects, appends strings, concatenates arrays
  *
  *   zoe.extend.PREPEND
- *   -chains functions with 'first', fills objects where properties not defined, prepends strings
+ *   -chains functions with 'first', fills objects, prepends strings
  *    and reverse concatenates arrays
  *
+ *   zoe.extend.DAPPEND
+ *   -chains functions, recursively deep appends objects, concatenates arrays
+ *
+ *   zoe.extend.DPREPEND
+ *   -chains functions, recursively deep prepends objects, prepends arrays
  *
  *
  * Making custom rules:
@@ -709,8 +715,11 @@ zoe.off = function(obj, name, f) {
  *    the ability to have a flexible object inheritance mechanism for web components.
  * 
  */
-
-var e = zoe.extend = function extend(a, b, rule) {
+//also allows multiple extension: extend(a, b, c, d, e, rule). But then rule must be specified.
+var zoe_extend = zoe.extend = function extend(a, b, rule) {
+  var _arguments = arguments;
+  if (_arguments.length > 2)
+    rule = _arguments[_arguments.length - 1];
   
   var ruleObj;
   if (typeof rule == 'object') {
@@ -728,104 +737,139 @@ var e = zoe.extend = function extend(a, b, rule) {
       var lastUnderscores = p.substr(pLength - 2, 2) == '__';
       
       //a fancy (minifies better) way of setting the underscore rules to the appropriate extend function
-      var underscoreRule = (firstUnderscores && !lastUnderscores && (p = p.substr(2)) && zoe.extend.APPEND)
-        || (!firstUnderscores && lastUnderscores && (p = p.substr(0, pLength - 2)) && zoe.extend.PREPEND)
-        || (firstUnderscores && lastUnderscores && (p = p.substr(2, pLength - 4)) && zoe.extend.REPLACE);
+      var underscoreRule = (firstUnderscores && !lastUnderscores && (p = p.substr(2)) && zoe_extend.APPEND)
+        || (!firstUnderscores && lastUnderscores && (p = p.substr(0, pLength - 2)) && zoe_extend.PREPEND)
+        || (firstUnderscores && lastUnderscores && (p = p.substr(2, pLength - 4)) && zoe_extend.REPLACE);
       
       //apply the right rule function
-      var curRule = (underscoreRule || rule || (ruleObj && (ruleObj[p] || ruleObj['*'])) || zoe.extend.DEFINE);
+      var curRule = (underscoreRule || rule || (ruleObj && (ruleObj[p] || ruleObj['*'])) || zoe_extend.DEFINE);
       
       //allow rules to be strings
       if (typeof curRule == 'string')
-        curRule = zoe.extend[curRule];
+        curRule = zoe_extend[curRule];
       
       try {
-        out = curRule(a[p], v, ruleObj && zoe.extend.deriveRules(ruleObj, p));
+        out = curRule(a[p], v, ruleObj && zoe_extend.deriveRules(ruleObj, p));
       }
       catch (er) {
         zoe.dir(a);
         zoe.dir(b);
-        zoe.dir(zoe.extend.deriveRules(rule, p));
+        zoe.dir(zoe_extend.deriveRules(rule, p));
         zoe.log('zoe.extend: "' + p + '" override error. \n ->' + (er.message || er));
       }
       if (out !== undefined)
         a[p] = out;
     }
+    
+  //multiple extension
+  if (_arguments.length > 3) {
+    var args = [a];
+    args.concat(Array.prototype.splice.call(_arguments, 2, _arguments.length - 3, _arguments.length - 3));
+    args.push(rule);
+    $z.extend.apply(this, args);
+  }
+  
   return a;
 }
 
-zoe.extend.EXTEND = zoe.extend;
-zoe.extend.DEFINE = function DEFINE(a, b) {
+zoe_extend.EXTEND = zoe_extend;
+zoe_extend.DEFINE = function DEFINE(a, b) {
   if (a !== undefined)
     throw 'No override specified.';
   else
     return b;
 }
-var r = zoe.extend.REPLACE = function REPLACE(a, b) {
+var r = zoe_extend.REPLACE = function REPLACE(a, b) {
   if (b !== undefined)
     return b;
   else
     return a;
 }
-zoe.extend.FILL = function FILL(a, b) {
+zoe_extend.FILL = function FILL(a, b) {
   if (a === undefined)
     return b;
   else
     return a;
 }
-var i = zoe.extend.IGNORE = function IGNORE(a, b) {}
-zoe.extend.APPEND = function APPEND(a, b, rules) {
-  if (b.constructor === Object)
-    return zoe.extend(a || {}, b, zoe.extend.REPLACE);
-  else if (typeof b == 'function')
-    return zoe.extend.CHAIN(a, b);
-  else if (typeof b == 'string')
-    return zoe.extend.STR_APPEND(a, b);
-  else if (b instanceof Array)
-    return zoe.extend.ARR_APPEND(a, b);
+var i = zoe_extend.IGNORE = function IGNORE(a, b) {}
+var is_obj = function(obj) {
+  return obj != null && obj.constructor == Object;
+}
+var is_fn = function(obj) {
+  return typeof obj == 'function';
+}
+var is_str = function(obj) {
+  return typeof obj == 'string';
+}
+var is_arr = function(obj) {
+  return obj instanceof Array;
+}
+zoe_extend.APPEND = function APPEND(a, b, rules) {
+  if (is_obj(b))
+    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'REPLACE'}));
+  else if (is_fn(b))
+    return zoe_extend.CHAIN(a, b);
+  else if (is_str(b))
+    return zoe_extend.STR_APPEND(a, b);
+  else if (is_arr(b))
+    return zoe_extend.ARR_APPEND(a, b);
   else
     return b;
 }
-zoe.extend.PREPEND = function PREPEND(a, b) {
-  if (b.constructor === Object)
-    return zoe.extend(a || {}, b, zoe.extend.FILL);
-  else if (typeof b == 'function')
-    return zoe.extend.CHAIN_FIRST(a, b);
-  else if (typeof b == 'string')
-    return zoe.extend.STR_PREPEND(a, b);
-  else if (b instanceof Array)
-    return zoe.extend.ARR_PREPEND(a, b);
+zoe_extend.PREPEND = function PREPEND(a, b, rules) {
+  if (is_obj(b))
+    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'FILL'}));
+  else if (is_fn(b))
+    return zoe_extend.CHAIN_FIRST(a, b);
+  else if (is_str(b))
+    return zoe_extend.STR_PREPEND(a, b);
+  else if (is_arr(b))
+    return zoe_extend.ARR_PREPEND(a, b);
   else
     return b;
 }
-zoe.extend.DREPLACE = function DREPLACE(a, b) {
-  if (b.constructor === Object) {
-    if (typeof a === 'undefined')
-      a = {};
-    return zoe.extend(a, b, zoe.extend.DREPLACE);
-  }
+zoe_extend.DAPPEND = function DAPPEND(a, b, rules) {
+  if (is_obj(b))
+    return zoe_extend(a || {}, b, zoe_extend.FILL(rules, {'*': 'DAPPEND'}));
+  else if (is_fn(b))
+    return zoe_extend.CHAIN(a, b);
+  else if (is_arr(b))
+    return zoe_extend.ARR_APPEND(a, b);
   else
     return b;
 }
-zoe.extend.DFILL = function DFILL(a, b) {
-  if (b.constructor === Object) {
-    if (typeof a === 'undefined')
-      a = {};
-    return e(a, b, zoe.extend.DFILL);
-  }
+zoe_extend.DPREPEND = function DPREPEND(a, b, rules) {
+  if (is_obj(b))
+    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'DPREPEND'}));
+  else if (is_fn(b))
+    return zoe_extend.CHAIN_FIRST(a, b);
+  else if (is_arr(b))
+    return zoe_extend.ARR_PREPEND(a, b);
   else
-    return typeof a === 'undefined' ? b : a;
+    return b;
 }
-zoe.extend.ARR_APPEND = function ARR_APPEND(a, b) {
+zoe_extend.DREPLACE = function DREPLACE(a, b, rules) {
+  if (is_obj(b))
+    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'DREPLACE'}));
+  else
+    return b;
+}
+zoe_extend.DFILL = function DFILL(a, b, rules) {
+  if (is_obj(b))
+    return zoe_extend(a || {}, b, 'DFILL');
+  else
+    return typeof a == 'undefined' ? b : a;
+}
+zoe_extend.ARR_APPEND = function ARR_APPEND(a, b) {
   return (a || []).concat(b);
 }
-zoe.extend.ARR_PREPEND = function ARR_PREPEND(a, b) {
+zoe_extend.ARR_PREPEND = function ARR_PREPEND(a, b) {
   return b.concat(a || []);
 }
-zoe.extend.STR_APPEND = function STR_APPEND(a, b) {
+zoe_extend.STR_APPEND = function STR_APPEND(a, b) {
   return a ? a + b : b;
 }
-zoe.extend.STR_PREPEND = function STR_PREPEND(a, b) {
+zoe_extend.STR_PREPEND = function STR_PREPEND(a, b) {
   return b + a;
 }
 
@@ -836,7 +880,7 @@ zoe.extend.STR_PREPEND = function STR_PREPEND(a, b) {
  
  then deriveRule(rules, 'prototype') == { 'init': zoe.extend.APPEND, 'init': zoe.extend.REPLACE, '*.*': zoe.extend.REPLACE }
 */
-zoe.extend.deriveRules = function(rules, p) {
+zoe_extend.deriveRules = function(rules, p) {
   var newRules = {};
   
   for (var r in rules) {
@@ -895,10 +939,10 @@ zoe.extend.deriveRules = function(rules, p) {
  *
  */
 
-zoe.extend.makeChain = function(executionFunction, first, ignoreExecution) {
+zoe_extend.makeChain = function(executionFunction, first, ignoreExecution) {
   return function(a, b) {
-    if (!a || a.constructor != zoe.fn || (!ignoreExecution && a.run != executionFunction))
-      a = zoe.fn(executionFunction, !a ? [] : [a]);
+    if (!a || a.constructor != zoe_fn || (!ignoreExecution && a.run != executionFunction))
+      a = zoe_fn(executionFunction, !a ? [] : [a]);
     
     if (first)
       a.first(b);
@@ -910,9 +954,9 @@ zoe.extend.makeChain = function(executionFunction, first, ignoreExecution) {
 }
 
 // create the zoe.extend rules for the corresponding function chain methods.
-zoe.extend.CHAIN = zoe.extend.makeChain(zoe.fn.LAST_DEFINED, false, true);
-zoe.extend.CHAIN_FIRST = zoe.extend.makeChain(zoe.fn.LAST_DEFINED, true, true);
-zoe.extend.CHAIN_STOP_DEFINED = zoe.extend.makeChain(zoe.fn.STOP_DEFINED);
+zoe_extend.CHAIN = zoe_extend.makeChain(zoe_fn.LAST_DEFINED, false, true);
+zoe_extend.CHAIN_FIRST = zoe_extend.makeChain(zoe_fn.LAST_DEFINED, true, true);
+zoe_extend.CHAIN_STOP_DEFINED = zoe_extend.makeChain(zoe_fn.STOP_DEFINED);
 
 
 
@@ -1061,19 +1105,19 @@ zoe.create = function(inherits, definition) {
   obj._definition = definition;
     
   var _extend = {
-    _extend: e.IGNORE,
-    _base: e.IGNORE,
-    _implement: e.IGNORE,
-    _reinherit: e.IGNORE,
-    _make: e.IGNORE,
-    _integrate: e.IGNORE,
-    _built: e.IGNORE
+    _extend: zoe_extend.IGNORE,
+    _base: zoe_extend.IGNORE,
+    _implement: zoe_extend.IGNORE,
+    _reinherit: zoe_extend.IGNORE,
+    _make: zoe_extend.IGNORE,
+    _integrate: zoe_extend.IGNORE,
+    _built: zoe_extend.IGNORE
   };
   
   //state variables
   var _inherited = [];
-  var _built = zoe.fn();
-  var _integrate = zoe.fn();
+  var _built = zoe_fn();
+  var _integrate = zoe_fn();
   
   _integrate._this = _built._this = obj;
   
@@ -1084,10 +1128,10 @@ zoe.create = function(inherits, definition) {
     if (def._integrate)
       _integrate.on(def._integrate);
     
-    zoe.extend(obj, def, _extend);
+    zoe_extend(obj, def, _extend);
     
     if (def._extend)
-      zoe.extend(_extend, def._extend, zoe.extend.REPLACE);
+      zoe_extend(_extend, def._extend, 'REPLACE');
   
     if (def._make)
       def._make.call(obj, definition, def);
@@ -1255,8 +1299,8 @@ zoe.Constructor = {
     return Constructor;
   },
   _extend: {
-    prototype: e,
-    construct: e.CHAIN
+    prototype: zoe_extend,
+    construct: zoe_extend.CHAIN
   },
   _integrate: function(def) {
     //the prototype property is skipped if it isn't an enumerable property
@@ -1265,7 +1309,7 @@ zoe.Constructor = {
     if (getPropertyDescriptor) {
       var p = getPropertyDescriptor(def, 'prototype');
       if (p && !p.enumerable)
-        zoe.extend(this.prototype, def.prototype, zoe.extend.deriveRules(this._extend, 'prototype'));
+        zoe_extend(this.prototype, def.prototype, zoe_extend.deriveRules(this._extend, 'prototype'));
     }
 
     //allow for working with standard prototypal inheritance as well    
@@ -1281,8 +1325,8 @@ zoe.Constructor = {
     //important to ensure modifications not made to the underlying prototype
     for (var p in this) {
       var curProperty = this[p];
-      if (curProperty && curProperty.constructor == zoe.fn) {
-        this[p] = zoe.fn(curProperty.run, [curProperty]);
+      if (curProperty && curProperty.constructor == zoe_fn) {
+        this[p] = zoe_fn(curProperty.run, [curProperty]);
         this[p].bind(this);
       }
     }
