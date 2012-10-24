@@ -104,9 +104,9 @@ var zoe = {};
 zoe.log = zoe.dir = function(){};
 if (typeof console !== 'undefined') {
   if (console.log)
-    zoe.log = function(str) { console.log(str); }
+    zoe.log = function(str, type) { console.log(str); }
   if (console.dir)
-    zoe.dir = function(obj) { console.dir(obj); }
+    zoe.dir = function(obj, type) { console.dir(obj); }
 }
 
 
@@ -258,7 +258,7 @@ var zoe_fn = zoe.fn = function(run, fns) {
   instance.constructor = zoe_fn;
   
   instance.fns = fns || [];
-  instance.run = run || zoe_fn.LAST_DEFINED;
+  instance.run = (typeof run == 'string' ? zoe_fn[run] : run) || zoe_fn.LAST_DEFINED;
   
   instance.on = on;
   instance.off = off;
@@ -806,7 +806,7 @@ var is_arr = function(obj) {
 }
 zoe_extend.APPEND = function APPEND(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'REPLACE'}));
+    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'REPLACE'}, 'FILL'));
   else if (is_fn(b))
     return zoe_extend.CHAIN(a, b);
   else if (is_str(b))
@@ -818,7 +818,7 @@ zoe_extend.APPEND = function APPEND(a, b, rules) {
 }
 zoe_extend.PREPEND = function PREPEND(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'FILL'}));
+    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'FILL'}, 'FILL'));
   else if (is_fn(b))
     return zoe_extend.CHAIN_FIRST(a, b);
   else if (is_str(b))
@@ -830,7 +830,7 @@ zoe_extend.PREPEND = function PREPEND(a, b, rules) {
 }
 zoe_extend.DAPPEND = function DAPPEND(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend.FILL(rules, {'*': 'DAPPEND'}));
+    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'DAPPEND'}, 'FILL'));
   else if (is_fn(b))
     return zoe_extend.CHAIN(a, b);
   else if (is_arr(b))
@@ -840,17 +840,17 @@ zoe_extend.DAPPEND = function DAPPEND(a, b, rules) {
 }
 zoe_extend.DPREPEND = function DPREPEND(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'DPREPEND'}));
+    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'DPREPEND'}, 'FILL'));
   else if (is_fn(b))
     return zoe_extend.CHAIN_FIRST(a, b);
   else if (is_arr(b))
     return zoe_extend.ARR_PREPEND(a, b);
   else
-    return b;
+    return a !== undefined ? a : b;
 }
 zoe_extend.DREPLACE = function DREPLACE(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend.FILL(rules || {}, {'*': 'DREPLACE'}));
+    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'DREPLACE'}, 'FILL'));
   else
     return b;
 }
