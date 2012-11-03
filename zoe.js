@@ -1128,10 +1128,10 @@ zoe.create = function(inherits, definition) {
     if (def._integrate)
       _integrate.on(def._integrate);
     
-    zoe_extend(obj, def, _extend);
-    
     if (def._extend)
       zoe_extend(_extend, def._extend, 'REPLACE');
+    
+    zoe_extend(obj, def, _extend);
   
     if (def._make)
       def._make.call(obj, definition, def);
