@@ -385,7 +385,7 @@ zoe_extend.PREPEND = function PREPEND(a, b, rules) {
   else if (is_arr(b))
     return zoe_extend.ARR_PREPEND(a, b);
   else
-    return b;
+    return a === undefined ? b : a;
 }
 zoe_extend.DAPPEND = function DAPPEND(a, b, rules) {
   if (is_obj(b))
