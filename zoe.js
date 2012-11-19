@@ -359,6 +359,20 @@ zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
   return output;
 }
 /*
+ * zoe.fn.COMPOSE
+ *
+ * Output of each function is the input to the next function
+ *
+ */
+zoe_fn.COMPOSE = function COMPOSE(self, args, fns) {
+  if (fns.length == 0)
+    return;
+  var output = fns[0].apply(self, args);
+  for (var i = 1; i < fns.length; i++)
+    output = fns[i].call(self, output);
+  return output;
+}
+/*
  * zoe.fn.ASYNC
  *
  * Allows for the creation of an asynchronous step function, with the
@@ -939,9 +953,11 @@ zoe_extend.deriveRules = function(rules, p) {
  *
  */
 
-zoe_extend.makeChain = function(executionFunction, first, ignoreExecution) {
+zoe_extend.makeChain = function(executionFunction, first) {
+  if (typeof executionFunction == 'string')
+    executionFunction = zoe_fn[executionFunction];
   return function(a, b) {
-    if (!a || a.constructor != zoe_fn || (!ignoreExecution && a.run != executionFunction))
+    if (!a || a.constructor != zoe_fn || a.run != executionFunction)
       a = zoe_fn(executionFunction, !a ? [] : [a]);
     
     if (first)
@@ -954,9 +970,10 @@ zoe_extend.makeChain = function(executionFunction, first, ignoreExecution) {
 }
 
 // create the zoe.extend rules for the corresponding function chain methods.
-zoe_extend.CHAIN = zoe_extend.makeChain(zoe_fn.LAST_DEFINED, false, true);
-zoe_extend.CHAIN_FIRST = zoe_extend.makeChain(zoe_fn.LAST_DEFINED, true, true);
+zoe_extend.CHAIN = zoe_extend.makeChain(zoe_fn.LAST_DEFINED);
+zoe_extend.CHAIN_FIRST = zoe_extend.makeChain(zoe_fn.LAST_DEFINED, true);
 zoe_extend.CHAIN_STOP_DEFINED = zoe_extend.makeChain(zoe_fn.STOP_DEFINED);
+zoe_extend.CHAIN_COMPOSE = zoe_extend.makeChain(zoe_fn.COMPOSE);
 
 
 
@@ -1127,12 +1144,12 @@ zoe.create = function(inherits, definition) {
     
     if (def._integrate)
       _integrate.on(def._integrate);
-    
+
     if (def._extend)
       zoe_extend(_extend, def._extend, 'REPLACE');
     
     zoe_extend(obj, def, _extend);
-  
+    
     if (def._make)
       def._make.call(obj, definition, def);
       
