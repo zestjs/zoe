@@ -18,7 +18,6 @@
  * This module works in NodeJS, AMD and the browser.
  *
  * In the case of AMD and the browser, a global 'zoe' is created.
- * If a 'zoe' global already exists, it is extended with these methods.
  *
  */
 (function (root, factory) {
@@ -57,7 +56,7 @@ if (typeof console !== 'undefined') {
  * http://zestjs.org/docs/zoe#zoe.fn
  *
  * Usage:
- *   zoe.fn(executionFunction, [initialFunctions]);
+ *   zoe.fn([initialFunctions], executionFunction);
  *   zoe.fn(executionFunction);
  *   zoe.fn([initialFunctions]);
  * 
@@ -74,14 +73,14 @@ if (typeof console !== 'undefined') {
  * 
  */
 
-var zoe_fn = zoe.fn = function(run, fns) {
-  if (run instanceof Array) {
-    fns = run;
-    run = null;
+var zoe_fn = zoe.fn = function(fns, run) {
+  if (typeof fns == 'function' || typeof fns == 'string') {
+    run = fns;
+    fns = null;
   }
   
   var instance = function() {
-    //http://zestjs.org/docs/zoe#zoe.fn
+    // http://zestjs.org/docs/zoe#zoe.fn
     return instance.run(instance._this || this, Array.prototype.splice.call(arguments, 0), instance.fns);
   }
   
@@ -138,9 +137,11 @@ var first = function(fn) {
  */
 zoe_fn.executeReduce = function(startVal, reduce) {
   if (reduce === undefined) {
-    reduce = typeof startVal == 'function' ? startVal() : startVal;
+    reduce = startVal;
     startVal = undefined;
   }
+  if (typeof startVal == 'function')
+    startVal = startVal();
   return function(self, args, fns) {
     var output = startVal;
     for (var i = 0; i < fns.length; i++)
@@ -209,15 +210,16 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
     complete = args.pop();
   var makeNext = function(i) {
     return function() {
-      if (fns[i])
+      if (fns[i]) {
         if (fns[i].length >= args.length + 1)
           fns[i].apply(self, args.concat([makeNext(i + 1)]));
         else {
           // if the function length is too short to take the 'next' callback, assume
           // it is synchronous and call it anywyay. used for render component 'load'
-          fns[i].apply(self, args)
+          fns[i].apply(self, args);
           makeNext(i + 1)();
         }
+      }
       else if (complete)
         complete();
     }
