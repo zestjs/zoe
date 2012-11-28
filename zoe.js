@@ -138,7 +138,7 @@ var first = function(fn) {
  */
 zoe_fn.executeReduce = function(startVal, reduce) {
   if (reduce === undefined) {
-    reduce = startVal;
+    reduce = typeof startVal == 'function' ? startVal() : startVal;
     startVal = undefined;
   }
   return function(self, args, fns) {
@@ -210,7 +210,14 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var makeNext = function(i) {
     return function() {
       if (fns[i])
-        fns[i].apply(self, args.concat([makeNext(i + 1)]));
+        if (fns[i].length >= args.length + 1)
+          fns[i].apply(self, args.concat([makeNext(i + 1)]));
+        else {
+          // if the function length is too short to take the 'next' callback, assume
+          // it is synchronous and call it anywyay. used for render component 'load'
+          fns[i].apply(self, args)
+          makeNext(i + 1)();
+        }
       else if (complete)
         complete();
     }
