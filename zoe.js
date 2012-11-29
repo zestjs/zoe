@@ -507,7 +507,7 @@ zoe_extend.makeChain = function(executionFunction, first) {
     executionFunction = zoe_fn[executionFunction];
   return function(a, b) {
     if (!a || a.constructor != zoe_fn || a.run != executionFunction)
-      a = zoe_fn(executionFunction, !a ? [] : [a]);
+      a = zoe_fn(!a ? [] : [a], executionFunction);
     
     if (first)
       a.first(b);
