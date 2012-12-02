@@ -37,18 +37,13 @@
 var zoe = {};
 
 /*
- * zoe.log, zoe.dir
+ * console.log, console.dir
  * Console log function existence wrappers
  * 
  */
-zoe.log = zoe.dir = function(){};
-if (typeof console !== 'undefined') {
-  if (console.log)
-    zoe.log = function(str, type) { console.log(str); }
-  if (console.dir)
-    zoe.dir = function(obj, type) { console.dir(obj); }
-}
-
+var console = typeof window != 'undefined' ? window.console = window.console || {} : global.console;
+console.dir = console.dir || function(){};
+console.log = console.log || function(){};
 
 /*
  * zoe.fn
@@ -186,14 +181,14 @@ zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
  * Output of each function is the input to the next function
  *
  */
-zoe_fn.COMPOSE = function COMPOSE(self, args, fns) {
+/* zoe_fn.COMPOSE = function COMPOSE(self, args, fns) {
   if (fns.length == 0)
     return;
   var output = fns[0].apply(self, args);
   for (var i = 1; i < fns.length; i++)
     output = fns[i].call(self, output);
   return output;
-}
+} */
 /*
  * zoe.fn.ASYNC
  * http://zestjs.org/docs/zoe#zoe.fn.ASYNC
@@ -334,10 +329,10 @@ var zoe_extend = zoe.extend = function extend(a, b, rule) {
         out = curRule(a[p], v, ruleObj && zoe_extend.deriveRules(ruleObj, p));
       }
       catch (er) {
-        zoe.dir(a);
-        zoe.dir(b);
-        zoe.dir(zoe_extend.deriveRules(rule, p));
-        zoe.log('zoe.extend: "' + p + '" override error. \n ->' + (er.message || er));
+        console.dir(a);
+        console.dir(b);
+        console.dir(zoe_extend.deriveRules(rule, p));
+        console.log('zoe.extend: "' + p + '" override error. \n ->' + (er.message || er));
       }
       if (out !== undefined)
         a[p] = out;
@@ -361,7 +356,7 @@ zoe_extend.DEFINE = function DEFINE(a, b) {
   else
     return b;
 }
-var r = zoe_extend.REPLACE = function REPLACE(a, b) {
+zoe_extend.REPLACE = function REPLACE(a, b) {
   if (b !== undefined)
     return b;
   else
@@ -373,7 +368,7 @@ zoe_extend.FILL = function FILL(a, b) {
   else
     return a;
 }
-var i = zoe_extend.IGNORE = function IGNORE(a, b) {}
+zoe_extend.IGNORE = function IGNORE() {}
 var is_obj = function(obj) {
   return obj != null && obj.constructor == Object;
 }
@@ -697,8 +692,8 @@ var implementLoop = function(def, loop, skip) {
     for (var i = 0, len = def._implement.length; i < len; i++) {
       var item = def._implement[i];
       if (!item) {
-        zoe.dir(def);
-        zoe.log('Implementor not defined!');
+        console.dir(def);
+        console.log('Implementor not defined!');
       }
 
       if (item._definition) {
