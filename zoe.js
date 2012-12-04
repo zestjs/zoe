@@ -332,7 +332,7 @@ var zoe_extend = zoe.extend = function extend(a, b, rule) {
         console.dir(a);
         console.dir(b);
         console.dir(zoe_extend.deriveRules(rule, p));
-        console.log('zoe.extend: "' + p + '" override error. \n ->' + (er.message || er));
+        throw 'zoe.extend: "' + p + '" override error. \n ->' + (er.message || er);
       }
       if (out !== undefined)
         a[p] = out;
@@ -517,7 +517,7 @@ zoe_extend.makeChain = function(executionFunction, first) {
 zoe_extend.CHAIN = zoe_extend.makeChain(zoe_fn.LAST_DEFINED);
 zoe_extend.CHAIN_FIRST = zoe_extend.makeChain(zoe_fn.LAST_DEFINED, true);
 zoe_extend.CHAIN_STOP_DEFINED = zoe_extend.makeChain(zoe_fn.STOP_DEFINED);
-zoe_extend.CHAIN_COMPOSE = zoe_extend.makeChain(zoe_fn.COMPOSE);
+zoe_extend.CHAIN_ASYNC = zoe_extend.makeChain(zoe_fn.ASYNC);
 
 
 
@@ -819,7 +819,7 @@ zoe.Constructor = {
     for (var p in this) {
       var curProperty = this[p];
       if (curProperty && curProperty.constructor == zoe_fn) {
-        this[p] = zoe_fn(curProperty.run, [curProperty]);
+        this[p] = zoe_fn([curProperty], curProperty.run);
         this[p].bind(this);
       }
     }
