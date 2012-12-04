@@ -822,10 +822,8 @@ zoe.InstanceChains = {
     //important to ensure modifications not made to the underlying prototype
     for (var p in this) {
       var curProperty = this[p];
-      if (curProperty && curProperty.constructor == zoe_fn) {
-        this[p] = zoe_fn([curProperty], curProperty.run);
-        this[p].bind(this);
-      }
+      if (curProperty && curProperty.constructor == zoe_fn)
+        this[p] = zoe_fn([curProperty], curProperty.run).bind(this);
     }
   }
 };
