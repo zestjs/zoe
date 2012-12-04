@@ -811,7 +811,11 @@ zoe.Constructor = {
         construct: def.construct,
         prototype: def
       };
-  },
+  }
+};
+
+
+zoe.InstanceChains = {
   construct: function() {
     //ALL function chains on the prototype made into instance chains
     //this allows instance-level function chaining
