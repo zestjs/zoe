@@ -1,0 +1,14 @@
+{
+  "name": "zoe",
+  "description": "Inheritance and Eventing Model",
+  "version": "0.0.1",
+  "author": {
+    "name": "Guy Bedford",
+    "email": "guybedford@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zestjs/zoe"
+  },
+  "main": "./zoe.js"
+}
