@@ -381,9 +381,9 @@ var is_str = function(obj) {
 var is_arr = function(obj) {
   return obj instanceof Array;
 }
-zoe_extend.APPEND = function APPEND(a, b, rules) {
+zoe_extend.APPEND = function APPEND(a, b, objRule) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'REPLACE'}, 'FILL'));
+    return zoe_extend(is_obj(a) ? a : {}, b, objRule || 'REPLACE');
   else if (is_fn(b))
     return zoe_extend.CHAIN(a, b);
   else if (is_str(b))
@@ -393,9 +393,9 @@ zoe_extend.APPEND = function APPEND(a, b, rules) {
   else
     return b;
 }
-zoe_extend.PREPEND = function PREPEND(a, b, rules) {
-  if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'FILL'}, 'FILL'));
+zoe_extend.PREPEND = function PREPEND(a, b, objRule) {
+  if (is_obj(b) && (a === undefined || is_obj(a)))
+    return zoe_extend(a || {}, b, objRule || 'FILL');
   else if (is_fn(b))
     return zoe_extend.CHAIN_FIRST(a, b);
   else if (is_str(b))
@@ -405,29 +405,15 @@ zoe_extend.PREPEND = function PREPEND(a, b, rules) {
   else
     return a === undefined ? b : a;
 }
-zoe_extend.DAPPEND = function DAPPEND(a, b, rules) {
-  if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'DAPPEND'}, 'FILL'));
-  else if (is_fn(b))
-    return zoe_extend.CHAIN(a, b);
-  else if (is_arr(b))
-    return zoe_extend.ARR_APPEND(a, b);
-  else
-    return b;
+zoe_extend.DAPPEND = function DAPPEND(a, b) {
+  return zoe_extend.APPEND(a, b, 'DAPPEND');
 }
-zoe_extend.DPREPEND = function DPREPEND(a, b, rules) {
-  if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'DPREPEND'}, 'FILL'));
-  else if (is_fn(b))
-    return zoe_extend.CHAIN_FIRST(a, b);
-  else if (is_arr(b))
-    return zoe_extend.ARR_PREPEND(a, b);
-  else
-    return a !== undefined ? a : b;
+zoe_extend.DPREPEND = function DPREPEND(a, b) {
+  return zoe.extend.PREPEND(a, b, 'DPREPEND');
 }
 zoe_extend.DREPLACE = function DREPLACE(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, zoe_extend(rules || {}, {'*': 'DREPLACE'}, 'FILL'));
+    return zoe_extend(a || {}, b, 'DREPLACE');
   else
     return b;
 }
