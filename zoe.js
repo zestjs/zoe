@@ -597,7 +597,7 @@ zoe.create = function(inherits, definition) {
   definition = inheritCheck(inherits, definition);
   
   if (definition._definition)
-    throw "Cannot use zoe.create on an instance of zoe.create";
+    definition = definition._definition;
   
   //find base definition (first base defined)
   var obj;
