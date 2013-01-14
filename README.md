@@ -40,7 +40,11 @@ Usage Examples
   myModel.loadData();
   myModel.addItem(10);
   console.log(myModel.items);
+```
 
+### Extending a Static Class
+
+```javascript
   // a double underscore notation can allow for setting extension rules in the property name itself
   // here, 'addItem' is replaced by the new function, and the 'items' array is prepended.
   var newModel = zoe.create([ModelClass], {
@@ -54,7 +58,7 @@ Usage Examples
   console.log(newModel.items);
 ```
 
-### Prototypal Inheritance Example
+### Prototypal Inheritance
 
 ```javascript
   // zoe.Constructor is an implementor providing extension rules for standard prototypal inheritance
