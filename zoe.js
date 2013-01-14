@@ -1,24 +1,6 @@
-/*
- * ZOE
- * Zest Object Extension
- * http://github.com/zestjs/zoe
- *
- * A natural JavaScript extension-based inheritance model.
- *
- * Can be used on its own, but primarily created for use
- * as part of the zestjs web framework.
- * (http://zestjs.org)
- *
- * Read the full documentation at
- * http://zestjs.org/docs/zoe
- * 
- * Environment
- * -----------
- *
- * This module works in NodeJS, AMD and the browser.
- *
- * In the case of AMD and the browser, a global 'zoe' is created.
- *
+/* 
+ * zoejs 0.0.1
+ * http://zoejs.org
  */
 (function (root, factory) {
   //nodejs
@@ -33,6 +15,25 @@
   else
     root.zoe = factory();
 }(this, function() {
+
+/*
+ * A natural JavaScript extension-based inheritance model.
+ *
+ * Can be used on its own, but primarily created for use
+ * as part of the zestjs web framework.
+ * (http://zestjs.org)
+ *
+ * Read the full documentation at
+ * http://zoejs.org
+ * 
+ * Environment
+ * -----------
+ *
+ * This module works in NodeJS, AMD and the browser.
+ *
+ * In the case of AMD and the browser, a global 'zoe' is created.
+ *
+ */
   
 var zoe = {};
 
