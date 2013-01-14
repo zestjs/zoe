@@ -58,7 +58,7 @@ Usage Examples
   console.log(newModel.items);
 ```
 
-### Prototypal Inheritance
+### Prototype Classes
 
 ```javascript
   // zoe.Constructor is an implementor providing extension rules for standard prototypal inheritance
@@ -82,7 +82,10 @@ Usage Examples
   // the class instance is now the Object Constructor to be instantiated
   var myBall = new Ball('yellow');
   myBall.getColor();
+```
 
+### Multiple Prototypal Extension
+```javascript
   // the prototype and constructor are extended naturally by default by zoe.Constructor
   var BouncingBall = zoe.create([Ball], {
     construct: function(color) {
