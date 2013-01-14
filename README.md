@@ -5,6 +5,8 @@ Natural JavaScript inheritance.
 
 For comprehensive documentation see [http://zoejs.org/docs].
 
+Runs in NodeJS, AMD and as a browser global.
+
 Usage Examples
 ---
 
@@ -29,9 +31,9 @@ Usage Examples
   };
 
   // creating the class extends each implemented class definition onto a new object, using the extension rules
-  // 'items' gets array-appended, causing the item list to be generated
-  // 'addItem' function gets chained, causing the functions to run one after the other
   var myModel = zoe.create([ModelClassDefinition], {
+    // 'items' gets array-appended, causing the item list to be generated
+    // 'addItem' function gets chained, causing the functions to run one after the other
     items: ['extra initial data'],
     addItem: function(item) {
       console.log('added item ' + item);
@@ -45,9 +47,9 @@ Usage Examples
 ### Extending a Static Class
 
 ```javascript
-  // a double underscore notation can allow for setting extension rules in the property name itself
-  // here, 'addItem' is replaced by the new function, and the 'items' array is prepended.
   var newModel = zoe.create([ModelClassDefinition], {
+    // a double underscore notation can allow for setting extension rules in the property name itself
+    // here, 'addItem' is replaced by the new function, and the 'items' array is prepended.
     __addItem__: function(item) {
       console.log('replaced add item method entirely');
     },
@@ -86,8 +88,8 @@ Usage Examples
 
 ### Multiple Prototypal Extension
 ```javascript
-  // the prototype and constructor are extended naturally by default by zoe.Constructor
   var BouncingBall = zoe.create([Ball], {
+    // the prototype and constructor are extended naturally by default by zoe.Constructor
     construct: function(color) {
       this.bouncing = false;
     },
