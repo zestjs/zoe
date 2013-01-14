@@ -649,7 +649,7 @@ zoe.create = function(inherits, definition) {
     _inherited.push(def);
     
   }, function skip(def) {
-    //diamond problem
+    // diamond problem
     // - skip double inheritance by default, lowest inheritor always used
     // - 'reinherit' property can specify to always rerun the inheritance at each repeat
     return _inherited.indexOf(def) != -1 && !def._reinherit
@@ -783,6 +783,12 @@ zoe.Constructor = {
     construct: zoe_extend.CHAIN
   },
   _integrate: function(def) {
+    //allow for working with standard prototypal inheritance as well    
+    if (typeof def == 'function' && !def._definition)
+      return {
+        construct: def,
+        prototype: def.prototype
+      };
     //the prototype property is skipped if it isn't an enumerable property
     //thus we run the extension manually in this case
     var getPropertyDescriptor = Object.getOwnPropertyDescriptor;
@@ -791,13 +797,6 @@ zoe.Constructor = {
       if (p && !p.enumerable)
         zoe_extend(this.prototype, def.prototype, zoe_extend.deriveRules(this._extend, 'prototype'));
     }
-
-    //allow for working with standard prototypal inheritance as well    
-    if (typeof def == 'function' && !def._definition)
-      return {
-        construct: def.construct,
-        prototype: def
-      };
   }
 };
 
