@@ -40,8 +40,8 @@ Usage Examples
     }
   });
   myModel.loadData();
-  myModel.addItem(10);
-  console.log(myModel.items);
+  myModel.addItem(10); // "added item 10"
+  console.log(myModel.items); // "['initial data item', 'extra initial data']"
 ```
 
 ### Extending a Static Class
@@ -56,8 +56,8 @@ Usage Examples
     items__: ['very first data item']
   });
   newModel.loadData();
-  newModel.addItem(10);
-  console.log(newModel.items);
+  newModel.addItem(10); // "replaced add item method entirely"
+  console.log(newModel.items); // "['very first data item', 'initial data item']"
 ```
 
 ### Prototype Classes
@@ -83,7 +83,7 @@ Usage Examples
 
   // the class instance is now the Object Constructor to be instantiated
   var myBall = new Ball('yellow');
-  myBall.getColor();
+  myBall.getColor(); // yellow
 ```
 
 ### Multiple Prototypal Extension
@@ -109,8 +109,8 @@ Usage Examples
   });
 
   var myBall = new BouncingBall('green');
-  myBall.bounce();
-  myBall.setColor('red');
+  myBall.bounce(); // "bouncing"
+  myBall.setColor('red'); // "the bouncing ball is now red"
 ```
 
 ### Eventing
@@ -121,9 +121,9 @@ Usage Examples
 
   var myBall = new EventedBall('blue');
   myBall.setColor.on(function(color) {
-    console.log('set color event hook: color is now ' + color);
+    console.log('set color event hook: color is now ' + this.color);
   });
-  myBall.setColor('red');
+  myBall.setColor('red'); // "set color event hook: color is now red"
 ```
 
 ### Custom Extension Logic
@@ -144,5 +144,5 @@ Custom extension definition hooks allow dynamic extension control:
   var Test = zoe.create([MyImplementor], {
     customProperty: 'Test class'
   });
-  console.log(Test.customProperty);
+  console.log(Test.customProperty); // "Test class created at Mon Jan 14 2013 14:35:08 GMT+0200 (SAST)
 ```
