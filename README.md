@@ -31,7 +31,7 @@ Usage Examples
   // creating the class extends each implemented class definition onto a new object, using the extension rules
   // 'items' gets array-appended, causing the item list to be generated
   // 'addItem' function gets chained, causing the functions to run one after the other
-  var myModel = zoe.create([ModelClass], {
+  var myModel = zoe.create([ModelClassDefinition], {
     items: ['extra initial data'],
     addItem: function(item) {
       console.log('added item ' + item);
@@ -47,7 +47,7 @@ Usage Examples
 ```javascript
   // a double underscore notation can allow for setting extension rules in the property name itself
   // here, 'addItem' is replaced by the new function, and the 'items' array is prepended.
-  var newModel = zoe.create([ModelClass], {
+  var newModel = zoe.create([ModelClassDefinition], {
     __addItem__: function(item) {
       console.log('replaced add item method entirely');
     },
