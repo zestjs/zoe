@@ -313,8 +313,15 @@ var zoe_extend = zoe.extend = function extend(a, b, rule) {
   if (typeof rule == 'object') {
     ruleObj = rule;
     rule = undefined;
+  }
+  else if (!rule) {
+    if (b._extend)
+      a._extend = zoe_extend(a._extend || {}, b._extend, 'REPLACE');
+    ruleObj = a._extend;
+  }
 
-    // auto populate extend rules for sub extensions
+  // auto populate extend rules for sub extensions
+  if (ruleObj)  
     for (var p in ruleObj) {
       var dotPos = p.indexOf('.');
       if (dotPos != -1) {
@@ -323,12 +330,6 @@ var zoe_extend = zoe.extend = function extend(a, b, rule) {
           ruleObj[fp] = zoe_extend;
       }
     }
-  }
-  else if (!rule) {
-    if (b._extend)
-      a._extend = zoe_extend(a._extend || {}, b._extend, 'REPLACE');
-    ruleObj = a._extend;
-  }
   
   for (var p in b)
     if (!b.hasOwnProperty || b.hasOwnProperty(p)) {
