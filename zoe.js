@@ -45,7 +45,7 @@ console.log = console.log || function(){};
 /*
  * zoe.fn
  * Function composition and execution
- * http://zestjs.org/docs/zoe#zoe.fn
+ * http://zoejs.org/#zoe.fn
  *
  * Usage:
  *   zoe.fn([initialFunctions], executionFunction);
@@ -144,7 +144,7 @@ zoe_fn.executeReduce = function(startVal, reduce) {
 
 /*
  * zoe.fn.LAST_DEFINED
- * http://zestjs.org/docs/zoe#zoe.fn.LAST_DEFINED
+ * http://zoejs.org/#zoe.fn.LAST_DEFINED
  *
  * Executes all functions in the chain, returning the last non-undefined
  * output.
@@ -156,7 +156,7 @@ var l = zoe_fn.LAST_DEFINED = zoe_fn.executeReduce(function(out1, out2) {
 
 /*
  * zoe.fn.STOP_DEFINED
- * http://zestjs.org/docs/zoe#zoe.fn.STOP_DEFINED
+ * http://zoejs.org/#zoe.fn.STOP_DEFINED
  *
  * Runs the execution of fns, until one function returns
  * a non-undefined output.
@@ -188,7 +188,7 @@ zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
 } */
 /*
  * zoe.fn.ASYNC
- * http://zestjs.org/docs/zoe#zoe.fn.ASYNC
+ * http://zoejs.org/#zoe.fn.ASYNC
  *
  * Allows for the creation of an asynchronous step function, with the
  * last argument to each successive function being the 'next' callback
@@ -234,7 +234,7 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
 
 /*
  * zoe.fn.ASYNC_SIM
- * http://zestjs.org/docs/zoe#zoe.fn.ASYNC_SIM
+ * http://zoejs.org/#zoe.fn.ASYNC_SIM
  *
  * Parallel asynchronous step functions.
  */
@@ -252,7 +252,7 @@ zoe_fn.ASYNC_SIM = function ASYNC_SIM(self, args, fns) {
 
 /*
  * zoe.on
- * http://zestjs.org/docs/zoe#zoe.on
+ * http://zoejs.org/#zoe.on
  *
  * Shorthand for converting any function to a chain
  * Effectively duck punching using zoe.fn, but if the
@@ -286,7 +286,7 @@ zoe.off = function(obj, name, f) {
 
 /*
  * zoe.extend
- * http://zestjs.org/docs/zoe#zoe.extend
+ * http://zoejs.org/#zoe.extend
  *
  * Extend obj A by merging properties from obj B
  * A flexible rules mechanism allows for advanced merging functions
@@ -543,7 +543,7 @@ zoe_extend.CHAIN_ASYNC = zoe_extend.makeChain(zoe_fn.ASYNC);
 
 /*
  * zoe.create
- * http://zestjs.org/docs/zoe#zoe.create
+ * http://zoejs.org/#zoe.create
  *
  * JavaScript object inheritance
  *
@@ -775,7 +775,7 @@ zoe.inherits = function(obj, def) {
 
 /*
  * zoe.Constructor
- * http://zestjs.org/docs/zoe#zoe.Constructor
+ * http://zoejs.org/#zoe.Constructor
  *
  * A base inheritor definition for zoe.create that allows for javascript prototype construction
  * such that we can create a class that can be instantiated with the new keyword.
