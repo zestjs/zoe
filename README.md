@@ -20,6 +20,10 @@ Install
   npm install zoe
 ```
 
+### Download
+
+Simply download zoe.min.js into the required location and require with a loader or script tag.
+
 License
 ---
 
