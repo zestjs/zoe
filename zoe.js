@@ -1,5 +1,5 @@
 /* 
- * zoejs 0.0.1
+ * zoe.js 0.0.1
  * http://zoejs.org
  */
 (function (root, factory) {
@@ -18,10 +18,6 @@
 
 /*
  * A natural JavaScript extension-based inheritance model.
- *
- * Can be used on its own, but primarily created for use
- * as part of the zestjs web framework.
- * (http://zestjs.org)
  *
  * Read the full documentation at
  * http://zoejs.org
@@ -199,6 +195,8 @@ zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
  * into the next function or final completion.
  *
  */
+var nextTick = typeof process != 'undefined' && process.nextTick;
+
 zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var i = 0;
   var complete;
@@ -207,12 +205,23 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var makeNext = function(i) {
     return function() {
       if (fns[i]) {
-        if (fns[i].length >= args.length + 1)
-          fns[i].apply(self, args.concat([makeNext(i + 1)]));
+        if (fns[i].length >= args.length + 1) {
+          if (nextTick)
+            nextTick(function() {
+              fns[i].apply(self, args.concat([makeNext(i + 1)]));
+            });
+          else
+            fns[i].apply(self, args.concat([makeNext(i + 1)]));
+        }
         else {
           // if the function length is too short to take the 'next' callback, assume
           // it is synchronous and call it anywyay. used for render component 'load'
-          fns[i].apply(self, args);
+          if (nextTick)
+            nextTick(function() {
+              fns[i].apply(self, args)
+            });
+          else
+            fns[i].apply(self, args);
           makeNext(i + 1)();
         }
       }
@@ -300,13 +309,31 @@ var zoe_extend = zoe.extend = function extend(a, b, rule) {
     rule = _arguments[_arguments.length - 1];
   
   var ruleObj;
+
   if (typeof rule == 'object') {
     ruleObj = rule;
-    rule = void 0;
+    rule = undefined;
+
+    // auto populate extend rules for sub extensions
+    for (var p in ruleObj) {
+      var dotPos = p.indexOf('.');
+      if (dotPos != -1) {
+        var fp = p.substr(0, dotPos);
+        if (!ruleObj[fp])
+          ruleObj[fp] = zoe_extend;
+      }
+    }
+  }
+  else if (!rule) {
+    if (b._extend)
+      a._extend = zoe_extend(a._extend || {}, b._extend, 'REPLACE');
+    ruleObj = a._extend;
   }
   
   for (var p in b)
     if (!b.hasOwnProperty || b.hasOwnProperty(p)) {
+      if (p == '_extend') continue;
+
       var v = b[p];
       var out;
       
@@ -382,9 +409,18 @@ var is_str = function(obj) {
 var is_arr = function(obj) {
   return obj instanceof Array;
 }
+var default_rule = function(rule, ext) {
+  if (!rule)
+    return ext;
+  if (typeof rule == 'string')
+    return rule;
+  if (rule && !rule['*'])
+    rule['*'] = ext;
+  return rule;
+} 
 zoe_extend.APPEND = function APPEND(a, b, objRule) {
   if (is_obj(b))
-    return zoe_extend(is_obj(a) ? a : {}, b, objRule || 'REPLACE');
+    return zoe_extend(is_obj(a) ? a : {}, b, default_rule(objRule, 'REPLACE'));
   else if (is_fn(b))
     return zoe_extend.CHAIN(a, b);
   else if (is_str(b))
@@ -396,7 +432,7 @@ zoe_extend.APPEND = function APPEND(a, b, objRule) {
 }
 zoe_extend.PREPEND = function PREPEND(a, b, objRule) {
   if (is_obj(b) && (a === undefined || is_obj(a)))
-    return zoe_extend(a || {}, b, objRule || 'FILL');
+    return zoe_extend(a || {}, b, default_rule(objRule, 'FILL'));
   else if (is_fn(b))
     return zoe_extend.CHAIN_FIRST(a, b);
   else if (is_str(b))
@@ -406,21 +442,21 @@ zoe_extend.PREPEND = function PREPEND(a, b, objRule) {
   else
     return a === undefined ? b : a;
 }
-zoe_extend.DAPPEND = function DAPPEND(a, b) {
-  return zoe_extend.APPEND(a, b, 'DAPPEND');
+zoe_extend.DAPPEND = function DAPPEND(a, b, rules) {
+  return zoe_extend.APPEND(a, b, default_rule(rules, 'DAPPEND'));
 }
-zoe_extend.DPREPEND = function DPREPEND(a, b) {
-  return zoe.extend.PREPEND(a, b, 'DPREPEND');
+zoe_extend.DPREPEND = function DPREPEND(a, b, rules) {
+  return zoe.extend.PREPEND(a, b, default_rule(rules, 'DPREPEND'));
 }
 zoe_extend.DREPLACE = function DREPLACE(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, 'DREPLACE');
+    return zoe_extend(a || {}, b, default_rule(rules, 'DREPLACE'));
   else
     return b;
 }
 zoe_extend.DFILL = function DFILL(a, b, rules) {
   if (is_obj(b))
-    return zoe_extend(a || {}, b, 'DFILL');
+    return zoe_extend(a || {}, b, default_rule(rules, 'DFILL'));
   else
     return typeof a == 'undefined' ? b : a;
 }
@@ -445,20 +481,17 @@ zoe_extend.STR_PREPEND = function STR_PREPEND(a, b) {
  then deriveRule(rules, 'prototype') == { 'init': zoe.extend.APPEND, 'init': zoe.extend.REPLACE, '*.*': zoe.extend.REPLACE }
 */
 zoe_extend.deriveRules = function(rules, p) {
-  var newRules = {};
+  var newRules;
   
   for (var r in rules) {
-    if (r == '*.*') {
-      newRules['*.*'] = rules[r];
-      continue;
-    }
-    
     if (r == '*')
       continue;
     
     var parts = r.split('.');
-    if (parts[0] == p || parts[0] == '*')
+    if (parts[0] == p || parts[0] == '*') {
+      newRules = newRules || {};
       newRules[parts.splice(1).join('.')] = rules[r];
+    }
   }
   
   return newRules;
@@ -611,8 +644,7 @@ zoe.create = function(inherits, definition) {
   
   obj._definition = definition;
     
-  var _extend = {
-    _extend: zoe_extend.IGNORE,
+  obj._extend = {
     _base: zoe_extend.IGNORE,
     _implement: zoe_extend.IGNORE,
     _reinherit: zoe_extend.IGNORE,
@@ -634,11 +666,8 @@ zoe.create = function(inherits, definition) {
     
     if (def._integrate)
       _integrate.on(def._integrate);
-
-    if (def._extend)
-      zoe_extend(_extend, def._extend, 'REPLACE');
     
-    zoe_extend(obj, def, _extend);
+    zoe_extend(obj, def);
     
     if (def._make)
       def._make.call(obj, definition, def);
@@ -816,3 +845,4 @@ zoe.InstanceChains = {
 
 return zoe;
 }));
+
