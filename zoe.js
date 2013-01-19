@@ -216,12 +216,7 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
         else {
           // if the function length is too short to take the 'next' callback, assume
           // it is synchronous and call it anywyay. used for render component 'load'
-          if (nextTick)
-            nextTick(function() {
-              fns[i].apply(self, args)
-            });
-          else
-            fns[i].apply(self, args);
+          fns[i].apply(self, args);
           makeNext(i + 1)();
         }
       }
