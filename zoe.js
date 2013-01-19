@@ -304,6 +304,7 @@ zoe.off = function(obj, name, f) {
  */
 //also allows multiple extension: extend(a, b, c, d, e, rule). But then rule must be specified.
 var zoe_extend = zoe.extend = function extend(a, b, rule) {
+  a = a || {};
   var _arguments = arguments;
   if (_arguments.length > 2)
     rule = _arguments[_arguments.length - 1];
