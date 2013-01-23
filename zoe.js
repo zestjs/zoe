@@ -800,7 +800,8 @@ zoe.Constructor = {
   _base: function(def) {
     function Constructor() {
       // http://github.com/zestjs/zoe#zcreate
-      Constructor.construct.apply(this, arguments);
+      if (Constructor.construct)
+        Constructor.construct.apply(this, arguments);
     }
     return Constructor;
   },
