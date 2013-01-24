@@ -828,15 +828,18 @@ zoe.Constructor = {
 };
 
 
-zoe.InstanceChains = {
+zoe.InstanceEvents = {
+  _extend: {
+    _events: 'ARR_APPEND' 
+  },
   construct: function() {
-    //ALL function chains on the prototype made into instance chains
-    //this allows instance-level function chaining
-    //important to ensure modifications not made to the underlying prototype
-    for (var p in this) {
-      var curProperty = this[p];
-      if (curProperty && curProperty.constructor == zoe_fn)
-        this[p] = zoe_fn([curProperty], curProperty.run).bind(this);
+    var _events = this.constructor._events;
+    if (!_events)
+      return;
+
+    for (var i = 0; i < _events.length; i++) {
+      var evt = _events[i];
+      this[evt] = zoe.fn(this[evt] ? [this[evt]] : []).bind(this);
     }
   }
 };
