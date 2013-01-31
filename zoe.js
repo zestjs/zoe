@@ -448,7 +448,7 @@ zoe_extend.DPREPEND = function DPREPEND(a, b, rules) {
 zoe_extend.DREPLACE = function DREPLACE(a, b, rules) {
   if (is_obj(b))
     return zoe_extend(a || {}, b, default_rule(rules, 'DREPLACE'));
-  else if (is_array(b))
+  else if (is_arr(b))
     return zoe_extend(a || [], b, default_rule(rules, 'DREPLACE'));
   else
     return b;
