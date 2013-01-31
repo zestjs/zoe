@@ -205,7 +205,7 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var makeNext = function(i) {
     return function() {
       if (fns[i]) {
-        if (fns[i].length >= args.length + 1) {
+        if (fns[i].length >= args.length + 1 || fns[i].run == zoe_fn.ASYNC) {
           if (nextTick)
             nextTick(function() {
               fns[i].apply(self, args.concat([makeNext(i + 1)]));
@@ -214,7 +214,8 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
             fns[i].apply(self, args.concat([makeNext(i + 1)]));
         }
         else {
-          // if the function length is too short to take the 'next' callback, assume
+          // if the function length is too short to take the 'next' callback, and
+          // it is not an async function chain itself, then assume it is
           // it is synchronous and call it anywyay. used for render component 'load'
           fns[i].apply(self, args);
           makeNext(i + 1)();
