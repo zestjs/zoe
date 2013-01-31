@@ -458,9 +458,15 @@ zoe_extend.DFILL = function DFILL(a, b, rules) {
     return typeof a == 'undefined' ? b : a;
 }
 zoe_extend.ARR_APPEND = function ARR_APPEND(a, b) {
-  return (a || []).concat(b);
+  a = a || [];
+  if (!a.concat)
+    a = [a];
+  return a.concat(b);
 }
 zoe_extend.ARR_PREPEND = function ARR_PREPEND(a, b) {
+  b = b || [];
+  if (!b.concat)
+    b = [b];
   return b.concat(a || []);
 }
 zoe_extend.STR_APPEND = function STR_APPEND(a, b) {
