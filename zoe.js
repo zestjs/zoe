@@ -195,8 +195,6 @@ zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
  * into the next function or final completion.
  *
  */
-var nextTick = typeof process != 'undefined' && process.nextTick;
-
 zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var i = 0;
   var complete;
@@ -206,12 +204,7 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
     return function() {
       if (fns[i]) {
         if (fns[i].length >= args.length + 1 || fns[i].run == zoe_fn.ASYNC) {
-          if (nextTick)
-            nextTick(function() {
-              fns[i].apply(self, args.concat([makeNext(i + 1)]));
-            });
-          else
-            fns[i].apply(self, args.concat([makeNext(i + 1)]));
+          fns[i].apply(self, args.concat([makeNext(i + 1)]));
         }
         else {
           // if the function length is too short to take the 'next' callback, and
