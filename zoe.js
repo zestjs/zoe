@@ -634,8 +634,8 @@ zoe.create = function(inherits, definition) {
   //find base definition (first base defined)
   var base, name;
   implementLoop(definition, function(item) {
-    if ((base = base || item._base) && (name = name || item._name));
-      return;
+    base = base || item._base;
+    name = name || item._name;
   });
 
   var obj = base ? base(name) : {};
