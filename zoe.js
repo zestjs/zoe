@@ -632,14 +632,13 @@ zoe.create = function(inherits, definition) {
     definition = definition._definition;
   
   //find base definition (first base defined)
-  var obj;
+  var base, name;
   implementLoop(definition, function(item) {
-    if (item._base) {
-      obj = item._base(definition);
-      return true;
-    }
+    if ((base = base || item._base) && (name = name || item._name));
+      return;
   });
-  obj = obj || {};
+
+  var obj = base ? base(name) : {};
   
   obj._definition = definition;
     
@@ -798,14 +797,25 @@ zoe.inherits = function(obj, def) {
  * natively can also be extended by adding them into the zoe.create implement list after zoe.Constructor.
  *
  */
+
+// test eval support
+var evalSupport = false;
+try {
+  eval('');
+  evalSupport = true;
+}
+catch (e) {}
+
 zoe.Constructor = {
-  _base: function(def) {
-    function Constructor() {
-      // http://github.com/zestjs/zoe#zcreate
-      if (Constructor.construct)
-        Constructor.construct.apply(this, arguments);
-    }
-    return Constructor;
+  _base: function(name) {
+    if (evalSupport && name && name.match(/[a-z]+/i))
+      return eval('(function ' + name + '(){if(' + name + '.construct)' + name + '.construct.apply(this, arguments);})');
+    else
+      return function Constructor() {
+        // http://github.com/zestjs/zoe#zcreate
+        if (Constructor.construct)
+          Constructor.construct.apply(this, arguments);
+      }
   },
   _extend: {
     prototype: zoe_extend,
