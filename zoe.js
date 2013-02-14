@@ -808,7 +808,7 @@ catch (e) {}
 
 zoe.Constructor = {
   _base: function(name) {
-    if (evalSupport && name && name.match(/[a-z]+/i))
+    if (evalSupport && name && name.match(/^[a-z]+$/i))
       return eval('(function ' + name + '(){if(' + name + '.construct)' + name + '.construct.apply(this, arguments);})');
     else
       return function Constructor() {
