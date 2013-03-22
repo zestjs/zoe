@@ -204,7 +204,7 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
     return function() {
       if (fns[i]) {
         if (fns[i].length >= args.length + 1 || fns[i].run == zoe_fn.ASYNC) {
-          fns[i].apply(self, arguments.length == 0 ? args.concat([makeNext(i + 1)]) : Array.prototype.splice.call(arguments, 0).concat([makeNext(i + 1)]));
+          fns[i].apply(self, (arguments.length ? Array.prototype.splice.call(arguments, 0) : args).concat([makeNext(i + 1)]));
         }
         else {
           // if the function length is too short to take the 'next' callback, and
