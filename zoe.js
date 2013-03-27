@@ -200,10 +200,12 @@ zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var complete;
   if (args.length > fns[0].length && typeof args[args.length - 1] == 'function')
     complete = args.pop();
+  var _args = args;
   var makeNext = function(i) {
     return function() {
       if (fns[i]) {
-        var _args = arguments.length ? Array.prototype.splice.call(arguments, 0) : args
+        if (arguments.length)
+          _args = Array.prototype.splice.call(arguments, 0);
         if (fns[i].length >= _args.length + 1 || fns[i].run == zoe_fn.ASYNC) {
           fns[i].apply(self, _args.concat([makeNext(i + 1)]));
         }
