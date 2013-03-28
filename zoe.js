@@ -643,6 +643,7 @@ zoe.create = function(inherits, definition) {
   obj._definition = definition;
     
   obj._extend = {
+    _name: zoe_extend.IGNORE,
     _base: zoe_extend.IGNORE,
     _implement: zoe_extend.IGNORE,
     _reinherit: zoe_extend.IGNORE,
@@ -812,7 +813,7 @@ zoe.Constructor = {
       return eval('(function ' + name + '(){if(' + name + '.construct)' + name + '.construct.apply(this, arguments);})');
     else
       return function Constructor() {
-        // http://github.com/zestjs/zoe#zcreate
+        // http://zoejs.org/#zoe.create
         if (Constructor.construct)
           Constructor.construct.apply(this, arguments);
       }
@@ -839,7 +840,14 @@ zoe.Constructor = {
   }
 };
 
-
+zoe_fn.COMPOSE_FIRST = function COMPOSE_FIRST(self, args, fns) {
+  if (fns.length == 0)
+    return;
+  var newArgs = fns[0].apply(self, args);
+  args = (newArgs instanceof Array) ? newArgs : args;
+  for (var i = 1; i < fns.length; i++)
+    fns[i].apply(self, args);
+}
 zoe.InstanceEvents = {
   _extend: {
     _events: 'ARR_APPEND' 
@@ -851,7 +859,7 @@ zoe.InstanceEvents = {
 
     for (var i = 0; i < _events.length; i++) {
       var evt = _events[i];
-      this[evt] = zoe.fn(this[evt] ? [this[evt]] : []).bind(this);
+      this[evt] = zoe.fn(this[evt] ? [this[evt]] : [], this[evt] ? 'COMPOSE_FIRST' : 'LAST_DEFINED').bind(this);
     }
   }
 };
