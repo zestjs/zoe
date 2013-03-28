@@ -198,19 +198,22 @@ zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
 zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var i = 0;
   var complete;
-  if (typeof args[args.length - 1] == 'function')
+  if (args.length >= fns[0].length && typeof args[args.length - 1] == 'function')
     complete = args.pop();
+  var _args = args;
   var makeNext = function(i) {
     return function() {
       if (fns[i]) {
-        if (fns[i].length >= args.length + 1 || fns[i].run == zoe_fn.ASYNC) {
-          fns[i].apply(self, args.concat([makeNext(i + 1)]));
+        if (arguments.length)
+          _args = Array.prototype.splice.call(arguments, 0);
+        if (fns[i].length >= _args.length + 1 || fns[i].run == zoe_fn.ASYNC) {
+          fns[i].apply(self, _args.concat([makeNext(i + 1)]));
         }
         else {
           // if the function length is too short to take the 'next' callback, and
           // it is not an async function chain itself, then assume it is
           // it is synchronous and call it anywyay. used for render component 'load'
-          fns[i].apply(self, args);
+          fns[i].apply(self, _args);
           makeNext(i + 1)();
         }
       }
