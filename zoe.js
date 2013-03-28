@@ -198,7 +198,7 @@ zoe_fn.STOP_DEFINED = function STOP_DEFINED(self, args, fns) {
 zoe_fn.ASYNC = zoe_fn.ASYNC_NEXT = function ASYNC_NEXT(self, args, fns) {
   var i = 0;
   var complete;
-  if (args.length >= fns[0].length && typeof args[args.length - 1] == 'function')
+  if (fns[0] && args.length >= fns[0].length && typeof args[args.length - 1] == 'function')
     complete = args.pop();
   var _args = args;
   var makeNext = function(i) {
